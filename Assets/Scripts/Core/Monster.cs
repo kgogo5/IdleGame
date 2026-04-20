@@ -86,7 +86,9 @@ namespace IdleGame.Core
         // Unity 기본 클릭 감지 (간단한 방법)
         private void OnMouseDown()
         {
-            Debug.Log("Monster clicked via OnMouseDown!");
+            if (Time.timeScale == 0f) return;
+            if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+
             TakeDamage(10);
         }
     }

@@ -9,7 +9,9 @@
       "Bash(dir /b Assets*.unity)",
       "Bash(mv Assets/playing.unity Assets/Scenes/)",
       "Bash(mv Assets/playing.unity.meta Assets/Scenes/)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nRefactor: Move playing scene to Scenes folder\n\n- Move playing.unity from Assets/ to Assets/Scenes/\n- Update EditorBuildSettings to reference new scene path\n- Remove old SampleScene.unity\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nRefactor: Move playing scene to Scenes folder\n\n- Move playing.unity from Assets/ to Assets/Scenes/\n- Update EditorBuildSettings to reference new scene path\n- Remove old SampleScene.unity\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(python3 -)",
+      "Bash(python3 -c \"import uuid; print\\(uuid.uuid4\\(\\).hex\\)\")"
     ],
     "deny": [],
     "ask": []
