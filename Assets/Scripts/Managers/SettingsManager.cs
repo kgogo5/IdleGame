@@ -46,7 +46,6 @@ namespace IdleGame.Managers
         {
             SoundEnabled = value;
             OnSoundChanged?.Invoke(value);
-            // TODO: AudioManager 연동
             Save();
         }
 
@@ -54,7 +53,6 @@ namespace IdleGame.Managers
         {
             BgmEnabled = value;
             OnBgmChanged?.Invoke(value);
-            // TODO: AudioManager BGM 연동
             Save();
         }
 

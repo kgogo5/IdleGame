@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using IdleGame.Data;
+using IdleGame.Managers;
 
 namespace IdleGame.Core
 {
@@ -74,22 +75,20 @@ namespace IdleGame.Core
 
         private void Die()
         {
-            // 골드 지급
             CurrencyManager.Instance.AddGold(_data.goldReward);
-
-            // 다음 몬스터 소환
+            AudioManager.Instance?.PlayGoldPing();
             MonsterManager.Instance.SpawnMonster();
-
             Destroy(gameObject);
         }
 
-        // Unity 기본 클릭 감지 (간단한 방법)
         private void OnMouseDown()
         {
             if (Time.timeScale == 0f) return;
             if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
 
             TakeDamage(10);
+            AudioManager.Instance?.PlayHit();
+            AudioManager.TryVibrate();
         }
     }
 }
