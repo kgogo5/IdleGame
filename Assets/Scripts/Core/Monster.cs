@@ -86,7 +86,8 @@ namespace IdleGame.Core
             if (Time.timeScale == 0f) return;
             if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
 
-            TakeDamage(10);
+            double dmg = Managers.PlayerStats.Instance?.ClickDamage ?? 10;
+            TakeDamage(dmg);
             AudioManager.Instance?.PlayHit();
             AudioManager.TryVibrate();
         }

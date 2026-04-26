@@ -35,43 +35,35 @@ namespace IdleGame.Managers
             _goldClip = PlaceholderAudio.MakeGoldPing();
 
             bgmSource.clip   = bgmClip;
-            bgmSource.volume = 1f;
             bgmSource.mute   = false;
             bgmSource.Play();
 
-            Debug.Log($"[AudioManager] BGM Play 호출 — isPlaying={bgmSource.isPlaying}, clip={bgmClip?.name}, mute={bgmSource.mute}");
+            Debug.Log($"[AudioManager] BGM Play — isPlaying={bgmSource.isPlaying}");
 
             SettingsManager sm = SettingsManager.Instance;
-            if (sm == null)
-            {
-                Debug.LogError("[AudioManager] SettingsManager.Instance가 null");
-                return;
-            }
+            if (sm == null) { Debug.LogError("[AudioManager] SettingsManager null"); return; }
 
-            sm.OnBgmChanged   += ApplyBgm;
-            sm.OnSoundChanged += ApplySound;
-            ApplyBgm(sm.BgmEnabled);
-            ApplySound(sm.SoundEnabled);
+            sm.OnBgmVolumeChanged += v => bgmSource.volume = v;
+            sm.OnSfxVolumeChanged += v => sfxSource.volume = v;
+            bgmSource.volume = sm.BgmVolume;
+            sfxSource.volume = sm.SfxVolume;
 
-            Debug.Log($"[AudioManager] 초기화 완료 — BGM={sm.BgmEnabled}, Sound={sm.SoundEnabled}");
+            Debug.Log($"[AudioManager] 초기화 완료 — BGM={sm.BgmVolume:F2}, SFX={sm.SfxVolume:F2}");
         }
 
         private void OnDestroy()
         {
             if (SettingsManager.Instance == null) return;
-            SettingsManager.Instance.OnBgmChanged   -= ApplyBgm;
-            SettingsManager.Instance.OnSoundChanged -= ApplySound;
+            SettingsManager.Instance.OnBgmVolumeChanged -= v => bgmSource.volume = v;
+            SettingsManager.Instance.OnSfxVolumeChanged -= v => sfxSource.volume = v;
         }
-
-        private void ApplyBgm(bool on)   => bgmSource.mute = !on;
-        private void ApplySound(bool on) => sfxSource.mute = !on;
 
         public void PlayHit()      => PlaySfx(_hitClip);
         public void PlayGoldPing() => PlaySfx(_goldClip);
 
         public void PlaySfx(AudioClip clip)
         {
-            if (clip == null || sfxSource.mute) return;
+            if (clip == null) return;
             sfxSource.PlayOneShot(clip);
         }
 

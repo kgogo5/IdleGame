@@ -15,6 +15,7 @@ namespace IdleGame.Core
 
         private int _currentMonsterIndex = 0;
 
+        public Monster CurrentMonster { get; private set; }
         public event Action<Monster> OnMonsterSpawned;
 
         private void Awake()
@@ -48,6 +49,7 @@ namespace IdleGame.Core
             GameObject monsterObj = Instantiate(_monsterPrefab, spawnPos, Quaternion.identity);
             Monster monster = monsterObj.GetComponent<Monster>();
             monster.Setup(currentData);
+            CurrentMonster = monster;
 
             OnMonsterSpawned?.Invoke(monster);
 

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3331369d686140298ba41935373be142, type: 3}
+  m_Name: Upgrade_ClickDamage
+  m_EditorClassIdentifier: Assembly-CSharp::IdleGame.Data.UpgradeData
+  upgradeName: "손가락 강화"
+  description: "클릭 데미지 증가"
+  icon: {fileID: 0}
+  baseCost: 50
+  costMultiplier: 1.15
+  maxLevel: 0
+  statType: 0
+  effectPerLevel: 5

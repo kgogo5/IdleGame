@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using IdleGame.Core;
+using IdleGame.Utils;
 
 namespace IdleGame.UI
 {
@@ -10,24 +11,23 @@ namespace IdleGame.UI
 
         private void Start()
         {
-            CurrencyManager.Instance.OnGoldChanged += UpdateGoldDisplay;
-            UpdateGoldDisplay(0);
+            if (CurrencyManager.Instance != null)
+            {
+                CurrencyManager.Instance.OnGoldChanged += UpdateGoldDisplay;
+                UpdateGoldDisplay(CurrencyManager.Instance.Gold);
+            }
         }
 
         private void UpdateGoldDisplay(double gold)
         {
             if (_goldText != null)
-            {
-                _goldText.text = $"Gold: {gold:F0}";
-            }
+                _goldText.text = $"골드: {NumberFormatter.Format(gold)}";
         }
 
         private void OnDestroy()
         {
             if (CurrencyManager.Instance != null)
-            {
                 CurrencyManager.Instance.OnGoldChanged -= UpdateGoldDisplay;
-            }
         }
     }
 }

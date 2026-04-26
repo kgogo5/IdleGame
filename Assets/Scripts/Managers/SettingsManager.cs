@@ -7,15 +7,15 @@ namespace IdleGame.Managers
     {
         public static SettingsManager Instance { get; private set; }
 
-        public bool SoundEnabled        { get; private set; }
-        public bool BgmEnabled          { get; private set; }
-        public bool VibrationEnabled    { get; private set; }
-        public bool NotificationEnabled { get; private set; }
+        public float BgmVolume          { get; private set; }
+        public float SfxVolume          { get; private set; }
+        public bool  VibrationEnabled   { get; private set; }
+        public bool  NotificationEnabled{ get; private set; }
 
-        public event Action<bool> OnSoundChanged;
-        public event Action<bool> OnBgmChanged;
-        public event Action<bool> OnVibrationChanged;
-        public event Action<bool> OnNotificationChanged;
+        public event Action<float> OnBgmVolumeChanged;
+        public event Action<float> OnSfxVolumeChanged;
+        public event Action<bool>  OnVibrationChanged;
+        public event Action<bool>  OnNotificationChanged;
 
         private void Awake()
         {
@@ -27,32 +27,32 @@ namespace IdleGame.Managers
 
         private void Load()
         {
-            SoundEnabled        = PlayerPrefs.GetInt("set_sound",        1) == 1;
-            BgmEnabled          = PlayerPrefs.GetInt("set_bgm",          1) == 1;
-            VibrationEnabled    = PlayerPrefs.GetInt("set_vibration",    1) == 1;
-            NotificationEnabled = PlayerPrefs.GetInt("set_notification", 1) == 1;
+            BgmVolume          = PlayerPrefs.GetFloat("set_bgm_vol",  0.8f);
+            SfxVolume          = PlayerPrefs.GetFloat("set_sfx_vol",  0.8f);
+            VibrationEnabled   = PlayerPrefs.GetInt("set_vibration",  1) == 1;
+            NotificationEnabled= PlayerPrefs.GetInt("set_notification",1) == 1;
         }
 
         private void Save()
         {
-            PlayerPrefs.SetInt("set_sound",        SoundEnabled        ? 1 : 0);
-            PlayerPrefs.SetInt("set_bgm",          BgmEnabled          ? 1 : 0);
-            PlayerPrefs.SetInt("set_vibration",    VibrationEnabled    ? 1 : 0);
-            PlayerPrefs.SetInt("set_notification", NotificationEnabled ? 1 : 0);
+            PlayerPrefs.SetFloat("set_bgm_vol",      BgmVolume);
+            PlayerPrefs.SetFloat("set_sfx_vol",      SfxVolume);
+            PlayerPrefs.SetInt("set_vibration",       VibrationEnabled   ? 1 : 0);
+            PlayerPrefs.SetInt("set_notification",    NotificationEnabled ? 1 : 0);
             PlayerPrefs.Save();
         }
 
-        public void SetSound(bool value)
+        public void SetBgmVolume(float value)
         {
-            SoundEnabled = value;
-            OnSoundChanged?.Invoke(value);
+            BgmVolume = Mathf.Clamp01(value);
+            OnBgmVolumeChanged?.Invoke(BgmVolume);
             Save();
         }
 
-        public void SetBgm(bool value)
+        public void SetSfxVolume(float value)
         {
-            BgmEnabled = value;
-            OnBgmChanged?.Invoke(value);
+            SfxVolume = Mathf.Clamp01(value);
+            OnSfxVolumeChanged?.Invoke(SfxVolume);
             Save();
         }
 

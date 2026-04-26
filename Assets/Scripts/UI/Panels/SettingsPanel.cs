@@ -35,7 +35,7 @@ namespace IdleGame.UI
         private const float ToggleW    = 108f;
         private const float ToggleH    = 50f;
         private const float KnobSize   = 42f;
-        private const float KnobOffset = 27f; // (ToggleW/2) - (KnobSize/2) - 6px padding
+        private const float KnobOffset = 27f;
 
         private static Sprite _pillSprite;
         private static Sprite _knobSprite;
@@ -45,26 +45,41 @@ namespace IdleGame.UI
         private void Start()
         {
             settingsButton.onClick.AddListener(OpenSettings);
-            SetupDimClose();
+            SetupOverlayClose();
             ApplyStyles();
         }
 
-        private void SetupDimClose()
+        // 전체화면 오버레이 — 자식 이벤트 버블링 문제를 피하기 위해 Button 대신 EventTrigger 사용
+        private void SetupOverlayClose()
         {
-            Image dimImg = settingsPopup.GetComponent<Image>();
-            if (dimImg == null)
-            {
-                // 딤 이미지가 없으면 투명 Image를 추가해 레이캐스트 수신
-                dimImg = settingsPopup.AddComponent<Image>();
-                dimImg.color = Color.clear;
-            }
-            dimImg.raycastTarget = true;
+            Image overlayImg = settingsPopup.GetComponent<Image>();
+            if (overlayImg == null)
+                overlayImg = settingsPopup.AddComponent<Image>();
 
-            Button dimBtn = settingsPopup.GetComponent<Button>() ?? settingsPopup.AddComponent<Button>();
-            dimBtn.transition    = Selectable.Transition.None;
-            dimBtn.targetGraphic = dimImg;
-            dimBtn.onClick.RemoveAllListeners();
-            dimBtn.onClick.AddListener(CloseSettings);
+            overlayImg.color         = new Color(0f, 0f, 0f, 0.88f);
+            overlayImg.raycastTarget = true;
+
+            // Button을 쓰면 자식(슬라이더 등)의 이벤트가 버블링되어 오버레이에 전달됨 → 제거
+            Button oldBtn = settingsPopup.GetComponent<Button>();
+            if (oldBtn != null) Destroy(oldBtn);
+
+            // EventTrigger: 실제로 오버레이 자체를 클릭했을 때만 닫기
+            var et = settingsPopup.GetComponent<UnityEngine.EventSystems.EventTrigger>()
+                  ?? settingsPopup.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+            et.triggers.Clear();
+
+            var entry = new UnityEngine.EventSystems.EventTrigger.Entry
+            {
+                eventID = UnityEngine.EventSystems.EventTriggerType.PointerClick
+            };
+            entry.callback.AddListener(data =>
+            {
+                var e = (UnityEngine.EventSystems.PointerEventData)data;
+                // raycast 원본 hit이 오버레이 자체일 때만 닫기 (자식 이벤트 버블링 무시)
+                if (e.pointerCurrentRaycast.gameObject == settingsPopup)
+                    CloseSettings();
+            });
+            et.triggers.Add(entry);
         }
 
         private void ApplyStyles()
@@ -88,13 +103,18 @@ namespace IdleGame.UI
 
             EnsureTitle(content);
 
-            SetupRow(content, "SoundToggle",        "사운드",
-                () => SettingsManager.Instance.SoundEnabled,        v => SettingsManager.Instance.SetSound(v));
-            SetupRow(content, "BGMToggle",          "배경음악",
-                () => SettingsManager.Instance.BgmEnabled,          v => SettingsManager.Instance.SetBgm(v));
-            SetupRow(content, "VibrationToggle",    "진동",
+            // 볼륨 슬라이더 행
+            SetupVolumeRow(content, "BGMToggle", "배경음악 볼륨",
+                () => SettingsManager.Instance.BgmVolume,
+                v  => SettingsManager.Instance.SetBgmVolume(v));
+            SetupVolumeRow(content, "SoundToggle", "효과음 볼륨",
+                () => SettingsManager.Instance.SfxVolume,
+                v  => SettingsManager.Instance.SetSfxVolume(v));
+
+            // 토글 행
+            SetupToggleRow(content, "VibrationToggle",    "진동",
                 () => SettingsManager.Instance.VibrationEnabled,    v => SettingsManager.Instance.SetVibration(v));
-            SetupRow(content, "NotificationToggle", "알림",
+            SetupToggleRow(content, "NotificationToggle", "알림",
                 () => SettingsManager.Instance.NotificationEnabled, v => SettingsManager.Instance.SetNotification(v));
 
             SetupCloseButton(content);
@@ -131,7 +151,113 @@ namespace IdleGame.UI
             img.raycastTarget = false;
         }
 
-        private void SetupRow(Transform content, string rowName, string label,
+        // 볼륨 슬라이더 행
+        private void SetupVolumeRow(Transform content, string rowName, string label,
+            Func<float> getVolume, Action<float> setVolume)
+        {
+            Transform row = content.Find(rowName);
+            if (row == null) return;
+
+            LayoutElement le = row.GetComponent<LayoutElement>() ?? row.gameObject.AddComponent<LayoutElement>();
+            le.preferredHeight = rowHeight;
+            le.flexibleHeight  = 0f;
+
+            TextMeshProUGUI labelTmp = row.GetComponent<TextMeshProUGUI>();
+            if (labelTmp != null)
+            {
+                labelTmp.text      = label;
+                labelTmp.color     = labelColor;
+                labelTmp.fontSize  = 24f;
+                labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                labelTmp.margin    = new Vector4(28f, 0f, 200f, 0f);
+                labelTmp.raycastTarget = false;
+            }
+
+            string divName = $"_Div{rowName}";
+            if (content.Find(divName) == null)
+                MakeDivider(content, divName, row.GetSiblingIndex() + 1);
+
+            // 슬라이더 위젯
+            Slider slider = BuildVolumeSlider(row);
+            slider.value = getVolume();
+            slider.onValueChanged.RemoveAllListeners();
+            slider.onValueChanged.AddListener(v => setVolume(v));
+        }
+
+        private Slider BuildVolumeSlider(Transform row)
+        {
+            Transform existing = row.Find("_VolumeSlider");
+            if (existing != null) return existing.GetComponent<Slider>();
+
+            GameObject sliderGo = new GameObject("_VolumeSlider");
+            sliderGo.transform.SetParent(row, false);
+
+            RectTransform rt = sliderGo.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1f, 0.5f);
+            rt.anchorMax = new Vector2(1f, 0.5f);
+            rt.pivot     = new Vector2(1f, 0.5f);
+            rt.anchoredPosition = new Vector2(-20f, 0f);
+            rt.sizeDelta        = new Vector2(170f, 44f);
+
+            // Background track
+            GameObject bg = new GameObject("Background");
+            bg.transform.SetParent(sliderGo.transform, false);
+            RectTransform bgRt = bg.AddComponent<RectTransform>();
+            bgRt.anchorMin = new Vector2(0, 0.3f);
+            bgRt.anchorMax = new Vector2(1, 0.7f);
+            bgRt.offsetMin = bgRt.offsetMax = Vector2.zero;
+            Image bgImg = bg.AddComponent<Image>();
+            bgImg.color = new Color(0.2f, 0.22f, 0.28f, 1f);
+            bgImg.raycastTarget = true; // true여야 슬라이더 GO까지 버블링되어 정상 작동
+
+            // Fill area
+            GameObject fillArea = new GameObject("Fill Area");
+            fillArea.transform.SetParent(sliderGo.transform, false);
+            RectTransform faRt = fillArea.AddComponent<RectTransform>();
+            faRt.anchorMin = new Vector2(0, 0.3f);
+            faRt.anchorMax = new Vector2(1, 0.7f);
+            faRt.offsetMin = new Vector2(4, 0);
+            faRt.offsetMax = new Vector2(-12, 0);
+
+            GameObject fill = new GameObject("Fill");
+            fill.transform.SetParent(fillArea.transform, false);
+            RectTransform fillRt = fill.AddComponent<RectTransform>();
+            fillRt.anchorMin = Vector2.zero;
+            fillRt.anchorMax = Vector2.one;
+            fillRt.offsetMin = fillRt.offsetMax = Vector2.zero;
+            Image fillImg = fill.AddComponent<Image>();
+            fillImg.color = onColor;
+            fillImg.raycastTarget = true; // 버블링 경로 확보
+
+            // Handle area
+            GameObject handleArea = new GameObject("Handle Slide Area");
+            handleArea.transform.SetParent(sliderGo.transform, false);
+            RectTransform haRt = handleArea.AddComponent<RectTransform>();
+            haRt.anchorMin = Vector2.zero;
+            haRt.anchorMax = Vector2.one;
+            haRt.offsetMin = new Vector2(8, 0);
+            haRt.offsetMax = new Vector2(-8, 0);
+
+            GameObject handle = new GameObject("Handle");
+            handle.transform.SetParent(handleArea.transform, false);
+            RectTransform hRt = handle.AddComponent<RectTransform>();
+            hRt.sizeDelta = new Vector2(22f, 22f);
+            Image handleImg = handle.AddComponent<Image>();
+            handleImg.sprite = KnobSprite;
+            handleImg.color  = Color.white;
+
+            Slider slider = sliderGo.AddComponent<Slider>();
+            slider.fillRect   = fillRt;
+            slider.handleRect = hRt;
+            slider.targetGraphic = handleImg;
+            slider.direction  = Slider.Direction.LeftToRight;
+            slider.minValue   = 0f;
+            slider.maxValue   = 1f;
+            return slider;
+        }
+
+        // 토글 행 (진동/알림)
+        private void SetupToggleRow(Transform content, string rowName, string label,
             Func<bool> getState, Action<bool> setState)
         {
             Transform row = content.Find(rowName);
@@ -147,7 +273,6 @@ namespace IdleGame.UI
                 labelTmp.text      = label;
                 labelTmp.color     = labelColor;
                 labelTmp.fontSize  = 28f;
-                labelTmp.fontStyle = FontStyles.Normal;
                 labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
                 labelTmp.margin    = new Vector4(28f, 0f, ToggleW + 28f, 0f);
                 labelTmp.raycastTarget = true;
@@ -155,7 +280,6 @@ namespace IdleGame.UI
 
             BuildToggle(row, out Image pillImg, out RectTransform knobRect);
 
-            // 행 아래 구분선
             string divName = $"_Div{rowName}";
             if (content.Find(divName) == null)
                 MakeDivider(content, divName, row.GetSiblingIndex() + 1);
@@ -172,23 +296,17 @@ namespace IdleGame.UI
 
             Refresh(getState());
             rowBtn.onClick.RemoveAllListeners();
-            rowBtn.onClick.AddListener(() =>
-            {
-                bool next = !getState();
-                setState(next);
-                Refresh(next);
-            });
+            rowBtn.onClick.AddListener(() => { bool next = !getState(); setState(next); Refresh(next); });
         }
 
         private void BuildToggle(Transform row, out Image pillImg, out RectTransform knobRect)
         {
-            // Pill 배경
             Transform toggleTf = row.Find("_Toggle");
             if (toggleTf == null)
             {
                 GameObject go = new GameObject("_Toggle");
                 go.transform.SetParent(row, false);
-                pillImg  = go.AddComponent<Image>(); // Image 추가 시 RectTransform 자동 생성
+                pillImg  = go.AddComponent<Image>();
                 toggleTf = go.transform;
             }
             else
@@ -206,7 +324,6 @@ namespace IdleGame.UI
             pillRect.anchoredPosition = new Vector2(-20f, 0f);
             pillRect.sizeDelta        = new Vector2(ToggleW, ToggleH);
 
-            // 노브 (흰 원)
             Transform knobTf = toggleTf.Find("_Knob");
             Image knobImg;
             if (knobTf == null)
@@ -265,6 +382,8 @@ namespace IdleGame.UI
                 cb.pressedColor     = closeBtnPressed;
                 cb.colorMultiplier  = 1f;
                 btn.colors = cb;
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(CloseSettings);
             }
 
             TextMeshProUGUI closeTmp = closeBtn.GetComponentInChildren<TextMeshProUGUI>(true);
@@ -290,8 +409,6 @@ namespace IdleGame.UI
             settingsPopup.SetActive(false);
             Time.timeScale = 1f;
         }
-
-        // --- 런타임 스프라이트 생성 (외부 에셋 불필요) ---
 
         private static Sprite MakePill(int w, int h)
         {
