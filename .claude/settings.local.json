@@ -21,7 +21,11 @@
       "Bash(sed -n '2005,2045p' \"c:/Users/김승태/IdleGame/Assets/Scenes/playing.unity\")",
       "Bash(sed -n '2500,2530p' \"c:/Users/김승태/IdleGame/Assets/Scenes/playing.unity\")",
       "Bash(sed -n '2640,2670p' \"c:/Users/김승태/IdleGame/Assets/Scenes/playing.unity\")",
-      "Bash(sed -n '4540,4570p' \"c:/Users/김승태/IdleGame/Assets/Scenes/playing.unity\")"
+      "Bash(sed -n '4540,4570p' \"c:/Users/김승태/IdleGame/Assets/Scenes/playing.unity\")",
+      "Bash(mkdir -p \"c:/Users/김승태/IdleGame/Assets/Resources/Audio/BGM\")",
+      "Bash(cp \"c:/Users/김승태/IdleGame/Assets/Audio/BGM/Second_Run.mp3\" \"c:/Users/김승태/IdleGame/Assets/Resources/Audio/BGM/Second_Run.mp3\")",
+      "Bash(cp \"c:/Users/김승태/IdleGame/Assets/Audio/BGM/Second_Run.mp3.meta\" \"c:/Users/김승태/IdleGame/Assets/Resources/Audio/BGM/Second_Run.mp3.meta\")",
+      "Bash(xargs sed *)"
     ],
     "deny": [],
     "ask": []

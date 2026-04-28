@@ -12,13 +12,17 @@ namespace IdleGame.Data
 
         [Header("가격")]
         public double buyPrice;
-        public double sellPrice; // 0 = 판매 불가
+        public double sellPrice;
 
-        [Header("스탯 보너스")]
+        [Header("장비 (isStackable = false)")]
+        public bool isStackable;
+        public ItemRarity rarity;
+        public EquipSlot slot;
+        public StatModifier[] modifiers; // % 기반, 음수 가능
+        public string setId;             // SetBonusData.name 과 매칭
+
+        [Header("소모품 (isStackable = true)")]
         public StatType statType;
         public double statBonus;
-
-        [Header("속성")]
-        public bool isStackable; // false = 한 개만 보유 가능 (장비 개념)
     }
 }

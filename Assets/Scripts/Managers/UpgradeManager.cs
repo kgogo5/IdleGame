@@ -10,7 +10,7 @@ namespace IdleGame.Managers
     {
         public static UpgradeManager Instance { get; private set; }
 
-        [SerializeField] private UpgradeData[] _upgrades;
+        private UpgradeData[] _upgrades;
 
         private readonly Dictionary<string, int> _levels = new();
 
@@ -22,8 +22,7 @@ namespace IdleGame.Managers
             if (Instance != null) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            if (_upgrades == null || _upgrades.Length == 0 || _upgrades[0] == null)
-                CreateDefaultUpgrades();
+            CreateDefaultUpgrades();
         }
 
         private void Start() => Load();
@@ -46,14 +45,27 @@ namespace IdleGame.Managers
                 return d;
             }
 
-            list.Add(Make("클릭 강화 I",   "+클릭 데미지",        50,   1.15f,  0,  StatType.ClickDamage,    5));
-            list.Add(Make("클릭 강화 II",  "+클릭 데미지(대)",   300,   1.15f,  0,  StatType.ClickDamage,   15));
-            list.Add(Make("멀티 히트",     "+클릭 데미지(강)",  2000,   1.20f, 20,  StatType.ClickDamage,   50));
-            list.Add(Make("자동 타격",     "+자동 공격",         200,   1.15f,  0,  StatType.AutoDPS,        2));
-            list.Add(Make("독 안개",       "+자동 공격(중)",     800,   1.18f,  0,  StatType.AutoDPS,        8));
-            list.Add(Make("자동 포탑",     "+자동 공격(강)",   5000,   1.20f,  0,  StatType.AutoDPS,       20));
-            list.Add(Make("골드 감각",     "+골드 배율",         500,   1.20f,  0,  StatType.GoldMultiplier, 0.1));
-            list.Add(Make("행운",          "+골드 배율(강)",   1500,   1.25f, 10,  StatType.GoldMultiplier, 0.05));
+            // ── 클릭 데미지 ──────────────────────────────────────
+            list.Add(Make("손가락 단련",   "클릭할 때마다 데미지가 조금 더 세진다.\n레벨당 클릭 데미지 +5",            50,  1.15f,  0, StatType.ClickDamage,     5));
+            list.Add(Make("강타 훈련",     "더 강하게 내려친다. 레벨당 클릭 데미지 +15",                             300,  1.15f,  0, StatType.ClickDamage,    15));
+            list.Add(Make("일격필살",      "한 방 한 방이 치명적으로 강해진다.\n레벨당 클릭 데미지 +50 (최대 20레벨)", 2000, 1.20f, 20, StatType.ClickDamage,    50));
+
+            // ── 클릭 공격속도 ─────────────────────────────────────
+            list.Add(Make("손놀림 향상",   "손이 더 빨라진다. 레벨당 클릭 공격속도 +0.5회/초 (최대 10레벨)",          400,  1.20f, 10, StatType.AttackSpeed,   0.5));
+            list.Add(Make("초고속 클릭",   "눈에 보이지 않는 속도로 클릭한다.\n레벨당 클릭 공격속도 +1.0회/초 (최대 10레벨)", 3000, 1.25f, 10, StatType.AttackSpeed, 1.0));
+
+            // ── 자동공격 데미지 ───────────────────────────────────
+            list.Add(Make("자동 타격기",   "자동으로 공격하는 장치를 설치한다.\n레벨당 자동공격 데미지 +2",            200,  1.15f,  0, StatType.AutoDamage,      2));
+            list.Add(Make("강화 타격기",   "자동 타격기를 업그레이드한다. 레벨당 자동공격 데미지 +8",                  800,  1.18f,  0, StatType.AutoDamage,      8));
+            list.Add(Make("자동 포탑",     "강력한 포탑이 쉬지 않고 공격한다.\n레벨당 자동공격 데미지 +20",           5000,  1.20f,  0, StatType.AutoDamage,     20));
+
+            // ── 자동공격 속도 ─────────────────────────────────────
+            list.Add(Make("연사 장치",     "자동 공격 빈도를 높인다.\n레벨당 자동공격 속도 +0.5회/초 (최대 10레벨)",   600,  1.20f, 10, StatType.AutoAttackSpeed, 0.5));
+            list.Add(Make("고속 연사",     "자동 공격이 훨씬 빠르게 발사된다.\n레벨당 자동공격 속도 +1.0회/초 (최대 10레벨)", 4000, 1.25f, 10, StatType.AutoAttackSpeed, 1.0));
+
+            // ── 골드 배율 ─────────────────────────────────────────
+            list.Add(Make("금 감지",       "몬스터에게서 더 많은 골드를 얻는다.\n레벨당 골드 배율 +0.1",               500,  1.20f,  0, StatType.GoldMultiplier,  0.1));
+            list.Add(Make("행운의 손",     "운이 더 좋아진다. 레벨당 골드 배율 +0.05 (최대 10레벨)",                 1500,  1.25f, 10, StatType.GoldMultiplier,  0.05));
 
             _upgrades = list.ToArray();
         }
@@ -87,6 +99,29 @@ namespace IdleGame.Managers
             return true;
         }
 
+        public void ResetData()
+        {
+            foreach (var kv in _levels)
+                PlayerPrefs.DeleteKey($"upg_{kv.Key}");
+            _levels.Clear();
+            OnUpgradePurchased?.Invoke();
+        }
+
+        public void MaxAllUpgrades()
+        {
+            if (_upgrades == null) return;
+            foreach (var upgrade in _upgrades)
+            {
+                int current = GetLevel(upgrade);
+                int target  = upgrade.maxLevel > 0 ? upgrade.maxLevel : 50;
+                if (current >= target) continue;
+                _levels[upgrade.name] = target;
+                PlayerStats.Instance.AddBonus(upgrade.statType, upgrade.effectPerLevel * (target - current));
+            }
+            Save();
+            OnUpgradePurchased?.Invoke();
+        }
+
         private void Save()
         {
             foreach (var kv in _levels)
@@ -102,7 +137,6 @@ namespace IdleGame.Managers
                 int level = PlayerPrefs.GetInt($"upg_{upgrade.name}", 0);
                 if (level <= 0) continue;
                 _levels[upgrade.name] = level;
-                // 이전 게임의 효과 복원
                 PlayerStats.Instance.AddBonus(upgrade.statType, upgrade.effectPerLevel * level);
             }
         }

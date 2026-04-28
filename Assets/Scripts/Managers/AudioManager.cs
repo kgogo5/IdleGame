@@ -30,7 +30,10 @@ namespace IdleGame.Managers
         {
             Debug.Log("[AudioManager] Start() 시작");
 
-            if (bgmClip == null) bgmClip = PlaceholderAudio.MakeBgm();
+            if (bgmClip == null)
+                bgmClip = Resources.Load<AudioClip>("Audio/BGM/bgm_main");
+            if (bgmClip == null)
+                bgmClip = PlaceholderAudio.MakeBgm();
             _hitClip  = PlaceholderAudio.MakeHit();
             _goldClip = PlaceholderAudio.MakeGoldPing();
 

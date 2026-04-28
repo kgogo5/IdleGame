@@ -8,9 +8,13 @@ namespace IdleGame.Core
         public static CurrencyManager Instance { get; private set; }
 
         private double _gold;
-        public double Gold => _gold;
+        private double _jewel;
+
+        public double Gold  => _gold;
+        public double Jewel => _jewel;
 
         public event Action<double> OnGoldChanged;
+        public event Action<double> OnJewelChanged;
 
         private void Awake()
         {
@@ -20,7 +24,6 @@ namespace IdleGame.Core
             Load();
         }
 
-        // 골드 추가 (몬스터 처치, 판매 등)
         public void AddGold(double amount)
         {
             double multiplier = Managers.PlayerStats.Instance?.GoldMultiplier ?? 1;
@@ -29,10 +32,8 @@ namespace IdleGame.Core
             Save();
         }
 
-        // 골드 보유 여부 확인
         public bool CanAfford(double amount) => _gold >= amount;
 
-        // 골드 차감 (구매 등) — 성공 여부 반환
         public bool SpendGold(double amount)
         {
             if (!CanAfford(amount)) return false;
@@ -42,12 +43,51 @@ namespace IdleGame.Core
             return true;
         }
 
-        private void Save() => PlayerPrefs.SetString("gold", _gold.ToString());
+        public void AddGoldRaw(double amount)
+        {
+            _gold += amount;
+            OnGoldChanged?.Invoke(_gold);
+            Save();
+        }
+
+        public void AddJewel(double amount)
+        {
+            _jewel += amount;
+            OnJewelChanged?.Invoke(_jewel);
+            Save();
+        }
+
+        public bool CanAffordJewel(double amount) => _jewel >= amount;
+
+        public bool SpendJewel(double amount)
+        {
+            if (!CanAffordJewel(amount)) return false;
+            _jewel -= amount;
+            OnJewelChanged?.Invoke(_jewel);
+            Save();
+            return true;
+        }
+
+        public void ResetData()
+        {
+            _gold  = 0;
+            _jewel = 0;
+            PlayerPrefs.DeleteKey("gold");
+            PlayerPrefs.DeleteKey("jewel");
+            OnGoldChanged?.Invoke(_gold);
+            OnJewelChanged?.Invoke(_jewel);
+        }
+
+        private void Save()
+        {
+            PlayerPrefs.SetString("gold",  _gold.ToString());
+            PlayerPrefs.SetString("jewel", _jewel.ToString());
+        }
 
         private void Load()
         {
-            string saved = PlayerPrefs.GetString("gold", "0");
-            double.TryParse(saved, out _gold);
+            double.TryParse(PlayerPrefs.GetString("gold",  "0"), out _gold);
+            double.TryParse(PlayerPrefs.GetString("jewel", "0"), out _jewel);
         }
     }
 }

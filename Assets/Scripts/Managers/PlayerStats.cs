@@ -6,28 +6,57 @@ using IdleGame.Core;
 
 namespace IdleGame.Managers
 {
-    // 모든 플레이어 스탯의 단일 진실 원천
-    // 업그레이드/아이템은 AddBonus()로 여기에 보너스를 쌓기만 함
     public class PlayerStats : MonoBehaviour
     {
         public static PlayerStats Instance { get; private set; }
 
-        [Header("기본 스탯 (레벨 0 기준)")]
-        [SerializeField] private double _baseClickDamage    = 10;
-        [SerializeField] private double _baseAutoDPS        = 0;
-        [SerializeField] private double _baseGoldMultiplier = 1;
+        [Header("기본 스탯")]
+        [SerializeField] private double _baseClickDamage     = 10;
+        [SerializeField] private double _baseAttackSpeed     = 2;   // 클릭 공격 횟수/초
+        [SerializeField] private double _baseAutoDamage      = 0;   // 자동공격 1회 데미지
+        [SerializeField] private double _baseAutoAttackSpeed = 1;   // 자동공격 횟수/초
+        [SerializeField] private double _baseGoldMultiplier  = 1;
 
-        // 업그레이드 + 아이템으로 쌓인 보너스
-        private double _clickDamageBonus;
-        private double _autoDPSBonus;
-        private double _goldMultiplierBonus;
+        // 업그레이드 플랫 보너스
+        private double _clickDamageFlat;
+        private double _attackSpeedFlat;
+        private double _autoDamageFlat;
+        private double _autoAttackSpeedFlat;
+        private double _goldMultiplierFlat;
 
-        // 최종 스탯 (기본 + 보너스)
-        public double ClickDamage    => _baseClickDamage    + _clickDamageBonus;
-        public double AutoDPS        => _baseAutoDPS        + _autoDPSBonus;
-        public double GoldMultiplier => _baseGoldMultiplier + _goldMultiplierBonus;
+        // 아이템/장비 % 보너스
+        private double _clickDamagePct;
+        private double _attackSpeedPct;
+        private double _autoDamagePct;
+        private double _autoAttackSpeedPct;
+        private double _goldMultiplierPct;
+
+        public double ClickDamage     => (_baseClickDamage     + _clickDamageFlat)     * (1 + _clickDamagePct);
+        public double AutoDamage      => (_baseAutoDamage      + _autoDamageFlat)      * (1 + _autoDamagePct);
+        public double GoldMultiplier  => (_baseGoldMultiplier  + _goldMultiplierFlat)  * (1 + _goldMultiplierPct);
+
+        // 공격속도: 최소/최대 클램프
+        public double AttackSpeed     => Math.Clamp(
+            (_baseAttackSpeed     + _attackSpeedFlat)     * (1 + _attackSpeedPct),     0.5, 20.0);
+        public double AutoAttackSpeed => Math.Clamp(
+            (_baseAutoAttackSpeed + _autoAttackSpeedFlat) * (1 + _autoAttackSpeedPct), 0.1, 10.0);
+
+        public float  ClickCooldown      => (float)(1.0 / AttackSpeed);
+        public float  AutoAttackInterval => (float)(1.0 / AutoAttackSpeed);
+
+        // 전투력: 클릭DPS + 자동DPS
+        public double CombatPower => ClickDamage * AttackSpeed + AutoDamage * AutoAttackSpeed;
 
         public event Action OnStatsChanged;
+
+        private float _lastClickTime = -999f;
+
+        public bool TryConsumeClick()
+        {
+            if (Time.time - _lastClickTime < ClickCooldown) return false;
+            _lastClickTime = Time.time;
+            return true;
+        }
 
         private void Awake()
         {
@@ -36,41 +65,63 @@ namespace IdleGame.Managers
             DontDestroyOnLoad(gameObject);
         }
 
-        private void Start()
-        {
-            StartCoroutine(AutoAttackLoop());
-        }
+        private void Start() => StartCoroutine(AutoAttackLoop());
 
-        // 업그레이드/아이템이 보너스를 추가할 때 호출
         public void AddBonus(StatType type, double amount)
         {
             switch (type)
             {
-                case StatType.ClickDamage:    _clickDamageBonus    += amount; break;
-                case StatType.AutoDPS:        _autoDPSBonus        += amount; break;
-                case StatType.GoldMultiplier: _goldMultiplierBonus += amount; break;
+                case StatType.ClickDamage:     _clickDamageFlat     += amount; break;
+                case StatType.AttackSpeed:     _attackSpeedFlat     += amount; break;
+                case StatType.AutoDamage:      _autoDamageFlat      += amount; break;
+                case StatType.AutoAttackSpeed: _autoAttackSpeedFlat += amount; break;
+                case StatType.GoldMultiplier:  _goldMultiplierFlat  += amount; break;
             }
             OnStatsChanged?.Invoke();
         }
 
         public void RemoveBonus(StatType type, double amount) => AddBonus(type, -amount);
 
-        public void ResetBonuses()
+        public void AddEquipModifier(StatType type, float percent)
         {
-            _clickDamageBonus    = 0;
-            _autoDPSBonus        = 0;
-            _goldMultiplierBonus = 0;
+            switch (type)
+            {
+                case StatType.ClickDamage:     _clickDamagePct     += percent; break;
+                case StatType.AttackSpeed:     _attackSpeedPct     += percent; break;
+                case StatType.AutoDamage:      _autoDamagePct      += percent; break;
+                case StatType.AutoAttackSpeed: _autoAttackSpeedPct += percent; break;
+                case StatType.GoldMultiplier:  _goldMultiplierPct  += percent; break;
+            }
             OnStatsChanged?.Invoke();
         }
 
-        // 자동 공격: AutoDPS만큼 1초마다 현재 몬스터 공격
+        public void ResetEquipModifiers()
+        {
+            _clickDamagePct = _attackSpeedPct = _autoDamagePct = _autoAttackSpeedPct = _goldMultiplierPct = 0;
+            OnStatsChanged?.Invoke();
+        }
+
+        public void ResetBonuses()
+        {
+            _clickDamageFlat = _attackSpeedFlat = _autoDamageFlat = _autoAttackSpeedFlat = _goldMultiplierFlat = 0;
+            _clickDamagePct  = _attackSpeedPct  = _autoDamagePct  = _autoAttackSpeedPct  = _goldMultiplierPct  = 0;
+            OnStatsChanged?.Invoke();
+        }
+
+        // 프레임 단위 타이머로 공격속도 변화에 즉각 반응
         private IEnumerator AutoAttackLoop()
         {
+            float elapsed = 0f;
             while (true)
             {
-                yield return new WaitForSeconds(1f);
-                if (AutoDPS <= 0) continue;
-                MonsterManager.Instance?.CurrentMonster?.TakeDamage(AutoDPS);
+                yield return null;
+                elapsed += Time.deltaTime;
+                if (elapsed >= AutoAttackInterval)
+                {
+                    elapsed -= AutoAttackInterval;
+                    if (AutoDamage > 0)
+                        MonsterManager.Instance?.CurrentMonster?.TakeDamage(AutoDamage);
+                }
             }
         }
     }

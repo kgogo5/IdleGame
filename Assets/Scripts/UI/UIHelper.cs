@@ -45,7 +45,7 @@ namespace IdleGame.UI
                 _ => TextAlignmentOptions.Left
             };
             tmp.raycastTarget = false;
-            tmp.enableWordWrapping = false;
+            tmp.textWrappingMode = TextWrappingModes.NoWrap;
             tmp.overflowMode = TextOverflowModes.Ellipsis;
 
             return obj;

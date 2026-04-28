@@ -35,16 +35,16 @@ namespace IdleGame.UI.Panels
 
         private void BuildLayout()
         {
-            UIHelper.MakeText(transform, "스킬", 36, TextAnchor.UpperCenter,
+            UIHelper.MakeText(transform, "스킬", 42, TextAnchor.UpperLeft,
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
-                offsetMin: new Vector2(0, -70), offsetMax: Vector2.zero);
+                offsetMin: new Vector2(20, -100), offsetMax: new Vector2(0, -20));
 
             GameObject scrollObj = UIHelper.MakeScrollView(transform, out _listContent);
             RectTransform scrollRt = scrollObj.GetComponent<RectTransform>();
             scrollRt.anchorMin = Vector2.zero;
             scrollRt.anchorMax = Vector2.one;
             scrollRt.offsetMin = new Vector2(8, 8);
-            scrollRt.offsetMax = new Vector2(-8, -75);
+            scrollRt.offsetMax = new Vector2(-8, -85);
         }
 
         private void Refresh()
@@ -88,19 +88,34 @@ namespace IdleGame.UI.Panels
             GameObject row = new GameObject(upgrade.name + "_Row");
             row.transform.SetParent(_listContent, false);
             RectTransform rowRt = row.AddComponent<RectTransform>();
-            rowRt.sizeDelta = new Vector2(0, 120);
+            rowRt.sizeDelta = new Vector2(0, 175);
             Image rowBg = row.AddComponent<Image>();
             rowBg.color = maxed
                 ? new Color(0.22f, 0.18f, 0.05f, 1f)
                 : new Color(0.12f, 0.12f, 0.18f, 1f);
 
-            // Left: Name + level
+            // 이름 + 레벨 (상단)
             string levelStr = maxed ? " [MAX]" : $" Lv.{lv}" + (upgrade.maxLevel > 0 ? $"/{upgrade.maxLevel}" : "");
-            UIHelper.MakeText(row.transform, upgrade.upgradeName + levelStr, 28, TextAnchor.MiddleLeft,
-                offsetMin: new Vector2(14, 16), offsetMax: new Vector2(-155, 0));
-            UIHelper.MakeText(row.transform, upgrade.description, 22, TextAnchor.MiddleLeft,
-                offsetMin: new Vector2(14, -20), offsetMax: new Vector2(-155, -20),
-                color: new Color(0.75f, 0.75f, 0.75f));
+            string categoryTag = upgrade.statType switch
+            {
+                StatType.AttackSpeed     => "<color=#88DDFF>[클릭공속] </color>",
+                StatType.AutoAttackSpeed => "<color=#AAFFAA>[자동공속] </color>",
+                StatType.AutoDamage      => "<color=#FFCC88>[자동공격] </color>",
+                StatType.GoldMultiplier  => "<color=#FFEE55>[골드] </color>",
+                _                        => "<color=#FFFFFF>[클릭] </color>"
+            };
+            // 이름 라벨: 행 상단에 고정
+            MakeRowLabel(row.transform, categoryTag + upgrade.upgradeName + levelStr,
+                fontSize: 32, color: Color.white,
+                anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
+                offsetMin: new Vector2(14, -70), offsetMax: new Vector2(-158, -4));
+
+            // 설명 라벨: 이름 아래
+            MakeRowLabel(row.transform, upgrade.description,
+                fontSize: 24, color: new Color(0.72f, 0.72f, 0.72f),
+                anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
+                offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-158, -78),
+                wrap: true);
 
             // Right: Buy button
             string btnLabel = maxed ? "MAX" : (canBuy ? $"구매\n{NumberFormatter.Format(cost)}G" : $"{NumberFormatter.Format(cost)}G");
@@ -111,15 +126,37 @@ namespace IdleGame.UI.Panels
             RectTransform btnRt = btn.GetComponent<RectTransform>();
             btnRt.anchorMin = new Vector2(1, 0.5f);
             btnRt.anchorMax = new Vector2(1, 0.5f);
-            btnRt.pivot = new Vector2(1, 0.5f);
+            btnRt.pivot     = new Vector2(1, 0.5f);
             btnRt.anchoredPosition = new Vector2(-10, 0);
-            btnRt.sizeDelta = new Vector2(140, 88);
+            btnRt.sizeDelta = new Vector2(140, 120);
 
             Button button = btn.GetComponent<Button>();
             if (canBuy)
                 button.onClick.AddListener(() => UpgradeManager.Instance.Buy(upgrade));
             else
                 button.interactable = false;
+        }
+
+        private static void MakeRowLabel(Transform parent, string text, float fontSize, Color color,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax, bool wrap = false)
+        {
+            GameObject go = new GameObject("Label");
+            go.transform.SetParent(parent, false);
+            RectTransform rt = go.AddComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = offsetMin;
+            rt.offsetMax = offsetMax;
+            TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.text      = text;
+            tmp.fontSize  = fontSize;
+            tmp.color     = color;
+            tmp.alignment = TextAlignmentOptions.MidlineLeft;
+            tmp.textWrappingMode = wrap
+                ? TMPro.TextWrappingModes.Normal
+                : TMPro.TextWrappingModes.NoWrap;
+            tmp.overflowMode  = TextOverflowModes.Ellipsis;
+            tmp.raycastTarget = false;
         }
     }
 }
