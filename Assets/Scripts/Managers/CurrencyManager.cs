@@ -68,6 +68,18 @@ namespace IdleGame.Core
             return true;
         }
 
+        // ── 디버그 (Inspector 우클릭 → 메뉴 선택) ─────────────────────────────
+        [SerializeField] private double _debugGoldAmount = 10000;
+
+        [ContextMenu("Debug / Add Gold")]
+        private void DebugAddGold() => AddGoldRaw(_debugGoldAmount);
+
+        [ContextMenu("Debug / Set Gold")]
+        private void DebugSetGold() { _gold = 0; AddGoldRaw(_debugGoldAmount); }
+
+        [ContextMenu("Debug / Reset Gold")]
+        private void DebugResetGold() { _gold = 0; OnGoldChanged?.Invoke(_gold); Save(); }
+
         public void ResetData()
         {
             _gold  = 0;

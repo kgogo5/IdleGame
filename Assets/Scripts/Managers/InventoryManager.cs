@@ -71,74 +71,97 @@ namespace IdleGame.Managers
             }
 
             // ── 노말 — 전사 세트 ──
-            list.Add(Equip("전사_검", "전사의 검",
+            var 전사검 = Equip("전사_검", "전사의 검",
                 "+40% 클릭 데미지",
                 2_000, 800, ItemRarity.Normal, EquipSlot.Weapon, "전사세트",
-                (StatType.ClickDamage, 0.40f)));
+                (StatType.ClickDamage, 0.40f));
+            전사검.particleEffectId = "hit_slash";
+            list.Add(전사검);
 
-            list.Add(Equip("전사_갑옷", "전사의 갑옷",
+            var 전사갑옷 = Equip("전사_갑옷", "전사의 갑옷",
                 "+20% 자동공격 데미지  -10% 클릭 데미지",
                 3_000, 1_200, ItemRarity.Normal, EquipSlot.Armor, "전사세트",
-                (StatType.AutoDamage, 0.20f), (StatType.ClickDamage, -0.10f)));
+                (StatType.AutoDamage, 0.20f), (StatType.ClickDamage, -0.10f));
+            list.Add(전사갑옷);
 
-            list.Add(Equip("전사_장갑", "전사의 장갑",
+            var 전사장갑 = Equip("전사_장갑", "전사의 장갑",
                 "+30% 클릭 데미지",
                 1_500, 600, ItemRarity.Normal, EquipSlot.Gloves, "전사세트",
-                (StatType.ClickDamage, 0.30f)));
+                (StatType.ClickDamage, 0.30f));
+            전사장갑.particleEffectId = "hit_punch";
+            list.Add(전사장갑);
 
             // ── 노말 — 마법사 세트 ──
-            list.Add(Equip("마법_투구", "마법사의 투구",
+            var 마법투구 = Equip("마법_투구", "마법사의 투구",
                 "+30% 자동공격 데미지",
                 2_500, 1_000, ItemRarity.Normal, EquipSlot.Helmet, "마법세트",
-                (StatType.AutoDamage, 0.30f)));
+                (StatType.AutoDamage, 0.30f));
+            마법투구.particleEffectId = "hit_magic";
+            list.Add(마법투구);
 
-            list.Add(Equip("마법_반지", "마법사의 반지",
+            var 마법반지 = Equip("마법_반지", "마법사의 반지",
                 "+25% 골드 배율  -10% 클릭 데미지",
                 2_000, 800, ItemRarity.Normal, EquipSlot.Ring, "마법세트",
-                (StatType.GoldMultiplier, 0.25f), (StatType.ClickDamage, -0.10f)));
+                (StatType.GoldMultiplier, 0.25f), (StatType.ClickDamage, -0.10f));
+            마법반지.particleEffectId = "hit_magic";
+            list.Add(마법반지);
 
-            list.Add(Equip("마법_목걸이", "마법사의 목걸이",
+            var 마법목걸이 = Equip("마법_목걸이", "마법사의 목걸이",
                 "+40% 골드 배율",
                 3_500, 1_400, ItemRarity.Normal, EquipSlot.Amulet, "마법세트",
-                (StatType.GoldMultiplier, 0.40f)));
+                (StatType.GoldMultiplier, 0.40f));
+            마법목걸이.particleEffectId = "hit_magic";
+            list.Add(마법목걸이);
 
             // ── 레어 ──
-            list.Add(Equip("레어_검", "정예 전사의 검",
+            var 레어검 = Equip("레어_검", "정예 전사의 검",
                 "+80% 클릭 데미지",
                 20_000, 8_000, ItemRarity.Rare, EquipSlot.Weapon, "",
-                (StatType.ClickDamage, 0.80f)));
+                (StatType.ClickDamage, 0.80f));
+            레어검.particleEffectId = "hit_slash";
+            list.Add(레어검);
 
-            list.Add(Equip("레어_갑옷", "강철 갑옷",
+            var 레어갑옷 = Equip("레어_갑옷", "강철 갑옷",
                 "+55% 자동공격 데미지",
                 25_000, 10_000, ItemRarity.Rare, EquipSlot.Armor, "",
-                (StatType.AutoDamage, 0.55f)));
+                (StatType.AutoDamage, 0.55f));
+            list.Add(레어갑옷);
 
-            list.Add(Equip("레어_반지", "황금 반지",
+            var 레어반지 = Equip("레어_반지", "황금 반지",
                 "+65% 골드 배율",
                 18_000, 7_000, ItemRarity.Rare, EquipSlot.Ring, "",
-                (StatType.GoldMultiplier, 0.65f)));
+                (StatType.GoldMultiplier, 0.65f));
+            list.Add(레어반지);
 
             // ── 유니크 (상점 비매품) ──
-            list.Add(Equip("유니크_검", "영웅의 검",
+            var 유니크검 = Equip("유니크_검", "영웅의 검",
                 "+150% 클릭 데미지  +50% 자동공격 데미지",
                 0, 50_000, ItemRarity.Unique, EquipSlot.Weapon, "",
-                (StatType.ClickDamage, 1.50f), (StatType.AutoDamage, 0.50f)));
+                (StatType.ClickDamage, 1.50f), (StatType.AutoDamage, 0.50f));
+            유니크검.particleEffectId = "hit_stab";
+            list.Add(유니크검);
 
-            list.Add(Equip("유니크_목걸이", "현자의 돌",
+            var 유니크목걸이 = Equip("유니크_목걸이", "현자의 돌",
                 "+120% 골드 배율  +60% 클릭 데미지",
                 0, 60_000, ItemRarity.Unique, EquipSlot.Amulet, "",
-                (StatType.GoldMultiplier, 1.20f), (StatType.ClickDamage, 0.60f)));
+                (StatType.GoldMultiplier, 1.20f), (StatType.ClickDamage, 0.60f));
+            유니크목걸이.particleEffectId = "hit_magic";
+            list.Add(유니크목걸이);
 
             // ── 레전더리 (상점 비매품) ──
-            list.Add(Equip("레전_검", "신화의 검",
+            var 레전검 = Equip("레전_검", "신화의 검",
                 "+300% 클릭 데미지  +150% 자동공격 데미지",
                 0, 200_000, ItemRarity.Legendary, EquipSlot.Weapon, "",
-                (StatType.ClickDamage, 3.00f), (StatType.AutoDamage, 1.50f)));
+                (StatType.ClickDamage, 3.00f), (StatType.AutoDamage, 1.50f));
+            레전검.particleEffectId = "hit_magic";
+            list.Add(레전검);
 
-            list.Add(Equip("레전_반지", "황금의 유산",
+            var 레전반지 = Equip("레전_반지", "황금의 유산",
                 "+250% 골드 배율  +150% 클릭 데미지",
                 0, 250_000, ItemRarity.Legendary, EquipSlot.Ring, "",
-                (StatType.GoldMultiplier, 2.50f), (StatType.ClickDamage, 1.50f)));
+                (StatType.GoldMultiplier, 2.50f), (StatType.ClickDamage, 1.50f));
+            레전반지.particleEffectId = "hit_magic";
+            list.Add(레전반지);
 
             // ── 소모품 (% 기반, 중복 구매 가능) ──
             list.Add(Consumable("소모_자동소", "자동 장치",
@@ -217,6 +240,27 @@ namespace IdleGame.Managers
 
         public ItemData GetEquippedInSlot(EquipSlot slot) =>
             _equipped.TryGetValue(slot, out var item) ? item : null;
+
+        // 장착된 아이템 중 등급이 가장 높은 것의 파티클 이펙트 반환
+        // Weapon 슬롯 우선 → 그 외 슬롯 → 없으면 "hit_punch"
+        public string GetEquippedParticleEffectId()
+        {
+            // 1순위: Weapon 슬롯
+            if (_equipped.TryGetValue(EquipSlot.Weapon, out var weapon) &&
+                !string.IsNullOrEmpty(weapon.particleEffectId))
+                return weapon.particleEffectId;
+
+            // 2순위: 나머지 슬롯 중 등급 가장 높은 것
+            ItemData best = null;
+            foreach (var item in _equipped.Values)
+            {
+                if (string.IsNullOrEmpty(item.particleEffectId)) continue;
+                if (best == null || item.rarity > best.rarity)
+                    best = item;
+            }
+
+            return best != null ? best.particleEffectId : "hit_punch";
+        }
 
         public IEnumerable<ItemData> GetEquippedItems() => _equipped.Values;
 

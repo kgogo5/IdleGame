@@ -67,6 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "IdleGame.slnx",
+    "dotnet.defaultSolution": "monster_tap.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
