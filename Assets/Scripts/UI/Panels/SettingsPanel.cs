@@ -66,24 +66,14 @@ namespace IdleGame.UI.Panels
         {
             Image overlayImg = settingsPopup.GetComponent<Image>()
                             ?? settingsPopup.AddComponent<Image>();
-            overlayImg.color         = new Color(0f, 0f, 0f, 0.88f);
+            overlayImg.color         = new Color(0.09f, 0.12f, 0.17f, 1f);
             overlayImg.raycastTarget = true;
 
             var oldBtn = settingsPopup.GetComponent<Button>();
             if (oldBtn != null) Destroy(oldBtn);
 
-            var et = settingsPopup.GetComponent<UnityEngine.EventSystems.EventTrigger>()
-                  ?? settingsPopup.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-            et.triggers.Clear();
-            var entry = new UnityEngine.EventSystems.EventTrigger.Entry
-                { eventID = UnityEngine.EventSystems.EventTriggerType.PointerClick };
-            entry.callback.AddListener(data =>
-            {
-                var e = (UnityEngine.EventSystems.PointerEventData)data;
-                if (e.pointerCurrentRaycast.gameObject == settingsPopup)
-                    CloseSettings();
-            });
-            et.triggers.Add(entry);
+            var et = settingsPopup.GetComponent<UnityEngine.EventSystems.EventTrigger>();
+            if (et != null) et.triggers.Clear();
         }
 
         private void ApplyStyles()
@@ -92,8 +82,48 @@ namespace IdleGame.UI.Panels
             Transform content = settingsPopup.transform.Find("SettingsContent");
             if (content == null) return;
 
+            // settingsPopup 전체화면
+            var popupRt = settingsPopup.GetComponent<RectTransform>();
+            if (popupRt != null)
+            {
+                popupRt.anchorMin = Vector2.zero;
+                popupRt.anchorMax = Vector2.one;
+                popupRt.offsetMin = Vector2.zero;
+                popupRt.offsetMax = Vector2.zero;
+            }
+
+            // SettingsContent 전체화면
+            var contentRt = content.GetComponent<RectTransform>();
+            if (contentRt != null)
+            {
+                contentRt.anchorMin = Vector2.zero;
+                contentRt.anchorMax = Vector2.one;
+                contentRt.offsetMin = Vector2.zero;
+                contentRt.offsetMax = Vector2.zero;
+            }
+
             var bg = content.GetComponent<Image>();
             if (bg != null) bg.color = contentBgColor;
+
+            // CanvasGroup alpha 강제 1로 (씬에서 설정된 값 무시)
+            var cg = settingsPopup.GetComponent<CanvasGroup>();
+            if (cg != null) cg.alpha = 1f;
+
+            // 불투명 배경 패널 — settingsPopup 자식 중 가장 아래(뒤)에 배치
+            if (settingsPopup.transform.Find("_BgBlocker") == null)
+            {
+                var blockerGo = new GameObject("_BgBlocker");
+                blockerGo.transform.SetParent(settingsPopup.transform, false);
+                blockerGo.transform.SetAsFirstSibling();
+                var bRt = blockerGo.AddComponent<RectTransform>();
+                bRt.anchorMin = Vector2.zero;
+                bRt.anchorMax = Vector2.one;
+                bRt.offsetMin = Vector2.zero;
+                bRt.offsetMax = Vector2.zero;
+                var bImg = blockerGo.AddComponent<Image>();
+                bImg.color = new Color(0.09f, 0.12f, 0.17f, 1f);
+                bImg.raycastTarget = false;
+            }
 
             var vg = content.GetComponent<VerticalLayoutGroup>()
                   ?? content.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -688,6 +718,7 @@ namespace IdleGame.UI.Panels
 
         public void OpenSettings()
         {
+            settingsPopup.transform.SetAsLastSibling();
             settingsPopup.SetActive(true);
             Time.timeScale = 0f;
         }

@@ -16,7 +16,8 @@ namespace IdleGame.Data
         [Range(1f, 3f)] public float costMultiplier = 1.15f; // 레벨당 비용 증가율
 
         [Header("제한")]
-        public int maxLevel; // 0 = 무제한
+        public int maxLevel;     // 0 = 무제한
+        public int unlockStage = 1; // 해당 스테이지 도달 시 언락
 
         [Header("효과")]
         public StatType statType;

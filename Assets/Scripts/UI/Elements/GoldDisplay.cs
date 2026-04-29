@@ -10,10 +10,10 @@ namespace IdleGame.UI
         [SerializeField] private TextMeshProUGUI _goldText;
 
         private TextMeshProUGUI _jewelText;
+        private TextMeshProUGUI _stageText;
 
         private void Start()
         {
-            // Find optional sibling JewelText
             Transform parent = transform.parent;
             if (parent != null)
             {
@@ -21,12 +21,21 @@ namespace IdleGame.UI
                 if (jt != null) _jewelText = jt.GetComponent<TextMeshProUGUI>();
             }
 
+            GameObject stObj = GameObject.Find("StageText");
+            if (stObj != null) _stageText = stObj.GetComponent<TextMeshProUGUI>();
+
             if (CurrencyManager.Instance != null)
             {
                 CurrencyManager.Instance.OnGoldChanged  += UpdateGoldDisplay;
                 CurrencyManager.Instance.OnJewelChanged += UpdateJewelDisplay;
                 UpdateGoldDisplay(CurrencyManager.Instance.Gold);
                 UpdateJewelDisplay(CurrencyManager.Instance.Jewel);
+            }
+
+            if (MonsterManager.Instance != null)
+            {
+                MonsterManager.Instance.OnStageChanged += UpdateStageDisplay;
+                UpdateStageDisplay(MonsterManager.Instance.Stage);
             }
         }
 
@@ -42,11 +51,21 @@ namespace IdleGame.UI
                 _jewelText.text = $"보석: {NumberFormatter.Format(jewel)}";
         }
 
+        private void UpdateStageDisplay(int stage)
+        {
+            if (_stageText != null)
+                _stageText.text = $"Stage {stage}";
+        }
+
         private void OnDestroy()
         {
-            if (CurrencyManager.Instance == null) return;
-            CurrencyManager.Instance.OnGoldChanged  -= UpdateGoldDisplay;
-            CurrencyManager.Instance.OnJewelChanged -= UpdateJewelDisplay;
+            if (CurrencyManager.Instance != null)
+            {
+                CurrencyManager.Instance.OnGoldChanged  -= UpdateGoldDisplay;
+                CurrencyManager.Instance.OnJewelChanged -= UpdateJewelDisplay;
+            }
+            if (MonsterManager.Instance != null)
+                MonsterManager.Instance.OnStageChanged -= UpdateStageDisplay;
         }
     }
 }

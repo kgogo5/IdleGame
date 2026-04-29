@@ -73,71 +73,71 @@ namespace IdleGame.Managers
             // ── 노말 — 전사 세트 ──
             list.Add(Equip("전사_검", "전사의 검",
                 "+40% 클릭 데미지",
-                2_000, 800, ItemRarity.Normal, EquipSlot.Weapon, "전사세트",
+                2_000, 2_000, ItemRarity.Normal, EquipSlot.Weapon, "전사세트",
                 (StatType.ClickDamage, 0.40f)));
 
             list.Add(Equip("전사_갑옷", "전사의 갑옷",
                 "+20% 자동공격 데미지  -10% 클릭 데미지",
-                3_000, 1_200, ItemRarity.Normal, EquipSlot.Armor, "전사세트",
+                3_000, 3_000, ItemRarity.Normal, EquipSlot.Armor, "전사세트",
                 (StatType.AutoDamage, 0.20f), (StatType.ClickDamage, -0.10f)));
 
             list.Add(Equip("전사_장갑", "전사의 장갑",
                 "+30% 클릭 데미지",
-                1_500, 600, ItemRarity.Normal, EquipSlot.Gloves, "전사세트",
+                1_500, 1_500, ItemRarity.Normal, EquipSlot.Gloves, "전사세트",
                 (StatType.ClickDamage, 0.30f)));
 
             // ── 노말 — 마법사 세트 ──
             list.Add(Equip("마법_투구", "마법사의 투구",
                 "+30% 자동공격 데미지",
-                2_500, 1_000, ItemRarity.Normal, EquipSlot.Helmet, "마법세트",
+                2_500, 2_500, ItemRarity.Normal, EquipSlot.Helmet, "마법세트",
                 (StatType.AutoDamage, 0.30f)));
 
             list.Add(Equip("마법_반지", "마법사의 반지",
                 "+25% 골드 배율  -10% 클릭 데미지",
-                2_000, 800, ItemRarity.Normal, EquipSlot.Ring, "마법세트",
+                2_000, 2_000, ItemRarity.Normal, EquipSlot.Ring, "마법세트",
                 (StatType.GoldMultiplier, 0.25f), (StatType.ClickDamage, -0.10f)));
 
             list.Add(Equip("마법_목걸이", "마법사의 목걸이",
                 "+40% 골드 배율",
-                3_500, 1_400, ItemRarity.Normal, EquipSlot.Amulet, "마법세트",
+                3_500, 3_500, ItemRarity.Normal, EquipSlot.Amulet, "마법세트",
                 (StatType.GoldMultiplier, 0.40f)));
 
             // ── 레어 ──
             list.Add(Equip("레어_검", "정예 전사의 검",
                 "+80% 클릭 데미지",
-                20_000, 8_000, ItemRarity.Rare, EquipSlot.Weapon, "",
+                20_000, 20_000, ItemRarity.Rare, EquipSlot.Weapon, "",
                 (StatType.ClickDamage, 0.80f)));
 
             list.Add(Equip("레어_갑옷", "강철 갑옷",
                 "+55% 자동공격 데미지",
-                25_000, 10_000, ItemRarity.Rare, EquipSlot.Armor, "",
+                25_000, 25_000, ItemRarity.Rare, EquipSlot.Armor, "",
                 (StatType.AutoDamage, 0.55f)));
 
             list.Add(Equip("레어_반지", "황금 반지",
                 "+65% 골드 배율",
-                18_000, 7_000, ItemRarity.Rare, EquipSlot.Ring, "",
+                18_000, 18_000, ItemRarity.Rare, EquipSlot.Ring, "",
                 (StatType.GoldMultiplier, 0.65f)));
 
             // ── 유니크 (상점 비매품) ──
             list.Add(Equip("유니크_검", "영웅의 검",
                 "+150% 클릭 데미지  +50% 자동공격 데미지",
-                0, 50_000, ItemRarity.Unique, EquipSlot.Weapon, "",
+                0, 150_000, ItemRarity.Unique, EquipSlot.Weapon, "",
                 (StatType.ClickDamage, 1.50f), (StatType.AutoDamage, 0.50f)));
 
             list.Add(Equip("유니크_목걸이", "현자의 돌",
                 "+120% 골드 배율  +60% 클릭 데미지",
-                0, 60_000, ItemRarity.Unique, EquipSlot.Amulet, "",
+                0, 180_000, ItemRarity.Unique, EquipSlot.Amulet, "",
                 (StatType.GoldMultiplier, 1.20f), (StatType.ClickDamage, 0.60f)));
 
             // ── 레전더리 (상점 비매품) ──
             list.Add(Equip("레전_검", "신화의 검",
                 "+300% 클릭 데미지  +150% 자동공격 데미지",
-                0, 200_000, ItemRarity.Legendary, EquipSlot.Weapon, "",
+                0, 600_000, ItemRarity.Legendary, EquipSlot.Weapon, "",
                 (StatType.ClickDamage, 3.00f), (StatType.AutoDamage, 1.50f)));
 
             list.Add(Equip("레전_반지", "황금의 유산",
                 "+250% 골드 배율  +150% 클릭 데미지",
-                0, 250_000, ItemRarity.Legendary, EquipSlot.Ring, "",
+                0, 750_000, ItemRarity.Legendary, EquipSlot.Ring, "",
                 (StatType.GoldMultiplier, 2.50f), (StatType.ClickDamage, 1.50f)));
 
             // ── 소모품 (% 기반, 중복 구매 가능) ──
@@ -381,6 +381,18 @@ namespace IdleGame.Managers
                 if (!item.isStackable) Equip(item);
                 else ApplyModifiers(item, +1);
             }
+            Save();
+            OnInventoryChanged?.Invoke();
+        }
+
+        // 특정 아이템 ID로 직접 지급
+        public void GiveItem(string itemId)
+        {
+            var item = FindItem(itemId);
+            if (item == null) return;
+            if (!item.isStackable && IsOwned(item)) return; // 장비 중복 지급 방지
+            _owned[item.name] = GetCount(item) + 1;
+            if (item.isStackable) ApplyModifiers(item, +1);
             Save();
             OnInventoryChanged?.Invoke();
         }

@@ -17,7 +17,7 @@ namespace IdleGame.Data
 
         public static Color ToColor(this ItemRarity r) => r switch
         {
-            ItemRarity.Normal    => Color.white,
+            ItemRarity.Normal    => new Color(0.75f, 0.75f, 0.75f),   // 연회색
             ItemRarity.Rare      => new Color(0.20f, 0.80f, 1.00f),   // 하늘색
             ItemRarity.Unique    => new Color(1.00f, 0.85f, 0.10f),   // 노랑
             ItemRarity.Legendary => new Color(1.00f, 0.50f, 0.05f),   // 주황

@@ -52,15 +52,17 @@ namespace IdleGame.UI.Panels
             if (_listContent == null || InventoryManager.Instance == null) return;
             foreach (Transform child in _listContent) Destroy(child.gameObject);
 
-            var items = new List<ItemData>();
+            // 장비 (비스택)
+            var equips = new List<ItemData>();
+            var consumables = new List<ItemData>();
             foreach (var item in InventoryManager.Instance.ShopItems)
             {
-                if (item == null || item.isStackable) continue;
-                if (!InventoryManager.Instance.IsOwned(item)) continue;
-                items.Add(item);
+                if (item == null || !InventoryManager.Instance.IsOwned(item)) continue;
+                if (item.isStackable) consumables.Add(item);
+                else equips.Add(item);
             }
 
-            items.Sort((a, b) =>
+            equips.Sort((a, b) =>
             {
                 bool aEq = InventoryManager.Instance.IsEquipped(a);
                 bool bEq = InventoryManager.Instance.IsEquipped(b);
@@ -68,24 +70,33 @@ namespace IdleGame.UI.Panels
                 return ((int)b.rarity).CompareTo((int)a.rarity);
             });
 
-            if (items.Count == 0)
+            if (equips.Count == 0)
                 AddEmptyLabel("보유 장비 없음");
             else
-                foreach (var item in items) CreateItemRow(item);
+                foreach (var item in equips) CreateItemRow(item);
 
-            AddSectionHeader("── 세트 보너스 ──");
-            bool hasSet = false;
+            // 소모품
+            if (consumables.Count > 0)
+            {
+                AddSectionHeader("── 소모품 ──");
+                foreach (var item in consumables) CreateConsumableRow(item);
+            }
+
             if (InventoryManager.Instance.SetBonuses != null)
             {
+                bool hasSet = false;
                 foreach (var setData in InventoryManager.Instance.SetBonuses)
                 {
                     int count = CountEquipped(setData);
                     if (count == 0) continue;
-                    hasSet = true;
+                    if (!hasSet)
+                    {
+                        hasSet = true;
+                        AddSectionHeader("── 세트 보너스 ──");
+                    }
                     CreateSetBonusRow(setData, count);
                 }
             }
-            if (!hasSet) AddEmptyLabel("활성 세트 없음");
         }
 
         private void CreateItemRow(ItemData item)
@@ -113,6 +124,20 @@ namespace IdleGame.UI.Panels
                 ? () => InventoryManager.Instance.Unequip(item)
                 : () => InventoryManager.Instance.Equip(item);
             MakeBtn(row.transform, btnLabel, btnColor, BTN_W, BTN_H, 30f, onClick);
+        }
+
+        private void CreateConsumableRow(ItemData item)
+        {
+            int count = InventoryManager.Instance.GetCount(item);
+            GameObject row = MakeRow(new Color(0.13f, 0.13f, 0.18f), ROW_H);
+
+            RowLabel(row.transform, $"{item.itemName}  x{count}", NAME_F, new Color(0.85f, 0.85f, 0.85f),
+                anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
+                offsetMin: new Vector2(14, -74), offsetMax: new Vector2(-14, -4));
+
+            RowLabel(row.transform, GetModsText(item), DESC_F, new Color(0.70f, 0.85f, 0.70f),
+                anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
+                offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-14, -80));
         }
 
         private void CreateSetBonusRow(SetBonusData setData, int equippedCount)

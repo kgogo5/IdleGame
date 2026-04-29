@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -9,6 +10,8 @@ namespace IdleGame.UI
         // 원본 탭 순서: 업그레이드 / 장비 / 전투(가운데) / 상점 / 업적
         private static readonly string[] TAB_NAMES = { "업그레이드", "장비", "전투", "상점", "업적" };
         private const int BATTLE_TAB = 2;
+
+        public static event Action<int> OnTabChanged;
 
         private GameObject[]  _panels;
         private Button[]      _navButtons;
@@ -78,6 +81,7 @@ namespace IdleGame.UI
         private void ShowTab(int index)
         {
             _activeTab = index;
+            OnTabChanged?.Invoke(index);
 
             bool isBattle = index == BATTLE_TAB;
 

@@ -8,7 +8,7 @@ namespace IdleGame.Core
     {
         private void Start()
         {
-            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+            Canvas canvas = Object.FindAnyObjectByType<Canvas>();
             if (canvas == null) { Debug.LogError("UIBoot: No Canvas found"); return; }
 
             SetupBackground();
@@ -75,7 +75,7 @@ namespace IdleGame.Core
 
             // HUD 패널 찾기 (GoldDisplay 포함)
             GameObject hudPanel = null;
-            GoldDisplay goldDisplay = Object.FindFirstObjectByType<GoldDisplay>();
+            GoldDisplay goldDisplay = Object.FindAnyObjectByType<GoldDisplay>();
             if (goldDisplay != null)
             {
                 Transform t = goldDisplay.transform;

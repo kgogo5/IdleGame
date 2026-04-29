@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using IdleGame.Core;
 using IdleGame.Data;
 using IdleGame.Managers;
 using IdleGame.Utils;
@@ -20,6 +21,8 @@ namespace IdleGame.UI.Panels
             Refresh();
             if (UpgradeManager.Instance != null)
                 UpgradeManager.Instance.OnUpgradePurchased += Refresh;
+            if (MonsterManager.Instance != null)
+                MonsterManager.Instance.OnStageChanged += _ => Refresh();
         }
 
         private void OnEnable()
@@ -31,6 +34,8 @@ namespace IdleGame.UI.Panels
         {
             if (UpgradeManager.Instance != null)
                 UpgradeManager.Instance.OnUpgradePurchased -= Refresh;
+            if (MonsterManager.Instance != null)
+                MonsterManager.Instance.OnStageChanged -= _ => Refresh();
         }
 
         private void BuildLayout()
@@ -62,12 +67,16 @@ namespace IdleGame.UI.Panels
                 return;
             }
 
+            bool anyVisible = false;
             foreach (var upgrade in upgrades)
             {
                 if (upgrade == null) continue;
+                if (!UpgradeManager.Instance.IsUnlocked(upgrade)) continue;
+                anyVisible = true;
                 try { CreateSkillRow(upgrade); }
                 catch (Exception e) { Debug.LogError($"[UpgradePanelUI] {upgrade.name}: {e.Message}"); }
             }
+            if (!anyVisible) ShowEmpty("스킬 없음");
         }
 
         private void ShowEmpty(string msg)
@@ -94,8 +103,6 @@ namespace IdleGame.UI.Panels
                 ? new Color(0.22f, 0.18f, 0.05f, 1f)
                 : new Color(0.12f, 0.12f, 0.18f, 1f);
 
-            // 이름 + 레벨 (상단)
-            string levelStr = maxed ? " [MAX]" : $" Lv.{lv}" + (upgrade.maxLevel > 0 ? $"/{upgrade.maxLevel}" : "");
             string categoryTag = upgrade.statType switch
             {
                 StatType.AttackSpeed     => "<color=#88DDFF>[클릭공속] </color>",
@@ -104,7 +111,9 @@ namespace IdleGame.UI.Panels
                 StatType.GoldMultiplier  => "<color=#FFEE55>[골드] </color>",
                 _                        => "<color=#FFFFFF>[클릭] </color>"
             };
-            // 이름 라벨: 행 상단에 고정
+
+            // 이름 + 레벨 (상단)
+            string levelStr = maxed ? " [MAX]" : $" Lv.{lv}" + (upgrade.maxLevel > 0 ? $"/{upgrade.maxLevel}" : "");
             MakeRowLabel(row.transform, categoryTag + upgrade.upgradeName + levelStr,
                 fontSize: 32, color: Color.white,
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),

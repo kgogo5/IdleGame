@@ -1,5 +1,7 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using IdleGame.Data;
 using IdleGame.Managers;
@@ -116,6 +118,11 @@ namespace IdleGame.UI.Panels
             _sellTabTxt.color = !_isBuyTab ? Color.white : new Color(0.7f, 0.7f, 0.7f);
         }
 
+        private Coroutine _holdSellRoutine;
+        private bool      _holdActivated;
+
+        private void OnDisable() => StopHoldSell();
+
         private void Refresh()
         {
             if (_listContent == null || InventoryManager.Instance == null) return;
@@ -197,7 +204,42 @@ namespace IdleGame.UI.Panels
                 $"판매\n{NumberFormatter.Format(item.sellPrice)}G", (int)BTN_F,
                 new Color(0.6f, 0.3f, 0.1f));
             SetBtnPos(btn, BTN_W, BTN_H);
-            btn.GetComponent<Button>().onClick.AddListener(() => InventoryManager.Instance.Sell(item));
+
+            var et = btn.AddComponent<EventTrigger>();
+            AddPtrEvent(et, EventTriggerType.PointerDown,
+                _ => { _holdActivated = false; _holdSellRoutine = StartCoroutine(HoldSell(item)); });
+            AddPtrEvent(et, EventTriggerType.PointerUp,
+                _ => { if (!_holdActivated && InventoryManager.Instance.IsOwned(item)) InventoryManager.Instance.Sell(item); StopHoldSell(); });
+            AddPtrEvent(et, EventTriggerType.PointerExit, _ => StopHoldSell());
+        }
+
+        private static void AddPtrEvent(EventTrigger et, EventTriggerType type,
+            UnityEngine.Events.UnityAction<BaseEventData> action)
+        {
+            var entry = new EventTrigger.Entry { eventID = type };
+            entry.callback.AddListener(action);
+            et.triggers.Add(entry);
+        }
+
+        private void StopHoldSell()
+        {
+            if (_holdSellRoutine != null) { StopCoroutine(_holdSellRoutine); _holdSellRoutine = null; }
+            _holdActivated = false;
+        }
+
+        private IEnumerator HoldSell(ItemData item)
+        {
+            // 0.5초 대기 후 홀드 모드 시작
+            yield return new WaitForSeconds(0.5f);
+
+            _holdActivated = true;
+            float interval = 0.5f;
+            while (InventoryManager.Instance.IsOwned(item))
+            {
+                InventoryManager.Instance.Sell(item);
+                yield return new WaitForSeconds(interval);
+                interval = Mathf.Max(interval * 0.8f, 0.05f); // 매 판매마다 20% 빨라짐, 최소 0.05초
+            }
         }
 
         private GameObject MakeRow(string id)
