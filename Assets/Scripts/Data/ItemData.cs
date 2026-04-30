@@ -24,5 +24,8 @@ namespace IdleGame.Data
         [Header("소모품 (isStackable = true)")]
         public StatType statType;
         public double statBonus;
+
+        [Header("파티클 효과")]
+        public string particleEffectId; // hit_punch / hit_slash / hit_stab / hit_magic
     }
 }

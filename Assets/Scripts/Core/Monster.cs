@@ -86,6 +86,40 @@ namespace IdleGame.Core
             CurrencyManager.Instance.AddGold(_goldReward);
             AudioManager.Instance?.PlayGoldPing();
             RollDrop();
+            StartCoroutine(DieEffect());
+        }
+
+        private IEnumerator DieEffect()
+        {
+            SpriteRenderer sr = GetComponent<SpriteRenderer>();
+            float duration = 0.35f;
+            float elapsed  = 0f;
+
+            Vector3 startScale    = transform.localScale;
+            float   startRotation = transform.eulerAngles.z;
+            float   targetRotation = startRotation + UnityEngine.Random.Range(-30f, 30f);
+
+            while (elapsed < duration)
+            {
+                float t = elapsed / duration;
+                float smooth = 1f - (1f - t) * (1f - t);
+
+                transform.rotation = Quaternion.Euler(0f, 0f,
+                    Mathf.LerpAngle(startRotation, targetRotation, smooth));
+
+                transform.position = _originalPosition + Vector3.down * (0.3f * smooth);
+
+                if (sr != null)
+                {
+                    Color c = sr.color;
+                    c.a = 1f - smooth;
+                    sr.color = c;
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
             MonsterManager.Instance.OnMonsterKilled();
             Destroy(gameObject);
         }
@@ -132,6 +166,11 @@ namespace IdleGame.Core
 
             var stats = Managers.PlayerStats.Instance;
             if (stats == null || !stats.TryConsumeClick()) return;
+
+            Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            pos.z = 0f;
+            string effectId = InventoryManager.Instance?.GetEquippedParticleEffectId() ?? "hit_punch";
+            ParticleManager.Instance?.Spawn(effectId, pos);
 
             TakeDamage(stats.ClickDamage);
             AudioManager.Instance?.PlayHit();

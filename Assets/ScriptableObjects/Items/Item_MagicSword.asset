@@ -20,3 +20,4 @@ MonoBehaviour:
   statType: 0
   statBonus: 300
   isStackable: 0
+  particleEffectId: hit_slash
