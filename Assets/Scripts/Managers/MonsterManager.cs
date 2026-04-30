@@ -27,15 +27,20 @@ namespace IdleGame.Core
                               && CurrencyManager.Instance.Gold > 0;
 
         public int Stage { get; private set; } = 1;
+        public int MaxStageReached { get; private set; } = 1;
         public Monster CurrentMonster { get; private set; }
 
         public event Action<Monster> OnMonsterSpawned;
         public event Action<int> OnStageChanged;
+        public event Action<int> OnMaxStageChanged;
 
         private void Awake()
         {
             if (Instance != null) { Destroy(gameObject); return; }
             Instance = this;
+            MaxStageReached = PlayerPrefs.GetInt("maxStageReached", 1);
+            Stage = PlayerPrefs.GetInt("currentStage", 1);
+            if (Stage > MaxStageReached) Stage = MaxStageReached;
             CreateBossData();
         }
 
@@ -71,8 +76,35 @@ namespace IdleGame.Core
             {
                 _killsInStage = 0;
                 Stage++;
+                PlayerPrefs.SetInt("currentStage", Stage);
+
+                if (Stage > MaxStageReached)
+                {
+                    MaxStageReached = Stage;
+                    PlayerPrefs.SetInt("maxStageReached", MaxStageReached);
+                    OnMaxStageChanged?.Invoke(MaxStageReached);
+                }
+
                 OnStageChanged?.Invoke(Stage);
             }
+            SpawnMonster();
+        }
+
+        public void SelectStage(int stage)
+        {
+            if (stage < 1 || stage > MaxStageReached) return;
+            Stage = stage;
+            _killsInStage = 0;
+            _forceNormal = false;
+            PlayerPrefs.SetInt("currentStage", Stage);
+
+            if (CurrentMonster != null)
+            {
+                Destroy(CurrentMonster.gameObject);
+                CurrentMonster = null;
+            }
+
+            OnStageChanged?.Invoke(Stage);
             SpawnMonster();
         }
 

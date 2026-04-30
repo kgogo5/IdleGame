@@ -27,5 +27,9 @@ namespace IdleGame.Data
 
         [Header("파티클 효과")]
         public string particleEffectId; // hit_punch / hit_slash / hit_stab / hit_magic
+
+        [Header("드랍 조건")]
+        [Tooltip("이 아이템이 드랍 풀에 포함되는 최소 스테이지")]
+        public int minDropStage = 1;
     }
 }
