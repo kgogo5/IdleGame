@@ -20,6 +20,8 @@ namespace IdleGame.Data
                 StatType.AutoDamage      => "자동공격 데미지",
                 StatType.AutoAttackSpeed => "자동공격 속도",
                 StatType.GoldMultiplier  => "골드 배율",
+                StatType.DropRate        => "아이템 드랍률",
+                StatType.BossSpawnRate   => "보스 등장 확률",
                 _                        => statType.ToString(),
             };
             return $"{sign}{percent * 100:F0}% {stat}";

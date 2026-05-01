@@ -78,7 +78,7 @@ namespace IdleGame.UI.Panels
             // 소모품
             if (consumables.Count > 0)
             {
-                AddSectionHeader("── 소모품 ──");
+                AddSectionHeader("- 소모품 -");
                 foreach (var item in consumables) CreateConsumableRow(item);
             }
 
@@ -92,11 +92,20 @@ namespace IdleGame.UI.Panels
                     if (!hasSet)
                     {
                         hasSet = true;
-                        AddSectionHeader("── 세트 보너스 ──");
+                        AddSectionHeader("- 세트 보너스 -");
                     }
                     CreateSetBonusRow(setData, count);
                 }
             }
+        }
+
+        private string GetSetName(ItemData item)
+        {
+            if (InventoryManager.Instance.SetBonuses == null) return null;
+            foreach (var setData in InventoryManager.Instance.SetBonuses)
+                if (setData.itemNames != null && System.Array.IndexOf(setData.itemNames, item.name) >= 0)
+                    return setData.setName;
+            return null;
         }
 
         private void CreateItemRow(ItemData item)
@@ -107,7 +116,9 @@ namespace IdleGame.UI.Panels
             GameObject row = MakeRow(bgColor, ROW_H);
 
             string hex = ColorUtility.ToHtmlStringRGB(item.rarity.ToColor());
-            string nameText = $"<color=#888888>[{item.slot.ToKorean()}]</color> <color=#{hex}>[{item.rarity.ToKorean()}]</color> {item.itemName}";
+            string setName = GetSetName(item);
+            string setTag = setName != null ? $"  <size=22><color=#FFCC44>[{setName}]</color></size>" : "";
+            string nameText = $"<color=#888888>[{item.slot.ToKorean()}]</color> <color=#{hex}>[{item.rarity.ToKorean()}]</color> {item.itemName}{setTag}";
 
             RowLabel(row.transform, nameText, NAME_F, Color.white,
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),

@@ -14,6 +14,7 @@ namespace IdleGame.Core
         private double _currentHealth;
         private float _regenPerSecond;
         private Vector3 _originalPosition;
+        private bool _isDead;
 
         [SerializeField] private float _shakeDuration = 0.1f;
         [SerializeField] private float _shakeAmount = 0.1f;
@@ -58,6 +59,8 @@ namespace IdleGame.Core
 
         public void TakeDamage(double damage)
         {
+            if (_isDead) return;
+
             double actualDamage = System.Math.Min(damage, _currentHealth);
             CurrencyManager.Instance.AddGold(_goldReward * (actualDamage / _maxHealth) * 0.05);
 
@@ -83,6 +86,7 @@ namespace IdleGame.Core
 
         private void Die()
         {
+            _isDead = true;
             CurrencyManager.Instance.AddGold(_goldReward);
             AudioManager.Instance?.PlayGoldPing();
             RollDrop();
@@ -127,7 +131,8 @@ namespace IdleGame.Core
         private void RollDrop()
         {
             if (_data == null || Managers.InventoryManager.Instance == null) return;
-            if (UnityEngine.Random.value > _data.dropChance) return;
+            float effectiveDropChance = _data.dropChance * (float)(Managers.PlayerStats.Instance?.DropRateMultiplier ?? 1.0);
+            if (UnityEngine.Random.value > effectiveDropChance) return;
 
             // 커스텀 + 등급 풀을 합산한 가중치 테이블 구성
             var pool = new System.Collections.Generic.List<(float weight, System.Action give)>();

@@ -11,18 +11,18 @@ namespace IdleGame.UI
         private static readonly string[] STAGE_NAMES =
         {
             "",
-            "Stage 1  초원",
-            "Stage 2  석굴",
-            "Stage 3  어둠의 숲",
-            "Stage 4  지하 묘지",
-            "Stage 5  불의 협곡",
-            "Stage 6  잊혀진 폐허",
-            "Stage 7  공포의 수도원",
-            "Stage 8  강철 요새",
-            "Stage 9  지옥문",
-            "Stage 10 절망의 탑",
-            "Stage 11 혼돈의 성역",
-            "Stage 12 지옥 심층부",
+            "초원",
+            "석굴",
+            "어둠의 숲",
+            "지하 묘지",
+            "불의 협곡",
+            "잊혀진 폐허",
+            "공포의 수도원",
+            "강철 요새",
+            "지옥문",
+            "절망의 탑",
+            "혼돈의 성역",
+            "지옥 심층부",
         };
 
         private TextMeshProUGUI _text;
@@ -75,7 +75,7 @@ namespace IdleGame.UI
         {
             if (_text == null) return;
             string name = stage < STAGE_NAMES.Length ? STAGE_NAMES[stage] : $"Stage {stage}";
-            _text.text = name + "  ▼";
+            _text.text = name + " ▼";
         }
 
         // ── 팝업 토글 ────────────────────────────────────────────────────────────
@@ -176,9 +176,7 @@ namespace IdleGame.UI
             var vpRt = viewport.AddComponent<RectTransform>();
             vpRt.anchorMin = Vector2.zero; vpRt.anchorMax = Vector2.one;
             vpRt.offsetMin = vpRt.offsetMax = Vector2.zero;
-            viewport.AddComponent<Image>().color = new Color(0, 0, 0, 0);
-            var mask = viewport.AddComponent<Mask>();
-            mask.showMaskGraphic = false;
+            viewport.AddComponent<RectMask2D>();
             scrollRect.viewport = vpRt;
 
             var content = new GameObject("Content");
@@ -254,6 +252,8 @@ namespace IdleGame.UI
             row.transform.SetParent(parent, false);
             var rt = row.AddComponent<RectTransform>();
             rt.sizeDelta = new Vector2(0, 56);
+            var le = row.AddComponent<UnityEngine.UI.LayoutElement>();
+            le.preferredHeight = 56;
 
             var bg = row.AddComponent<Image>();
             bg.color = unlocked ? new Color(0.18f, 0.22f, 0.30f) : new Color(0.12f, 0.12f, 0.16f);
@@ -286,7 +286,9 @@ namespace IdleGame.UI
             labelRt.offsetMin = new Vector2(14, 0);
             labelRt.offsetMax = Vector2.zero;
             var labelTmp = labelObj.AddComponent<TextMeshProUGUI>();
-            labelTmp.text = stage < STAGE_NAMES.Length ? STAGE_NAMES[stage] : $"Stage {stage}";
+            labelTmp.text = stage < STAGE_NAMES.Length
+                ? $"Stage {stage}  {STAGE_NAMES[stage]}"
+                : $"Stage {stage}";
             labelTmp.fontSize = 20;
             labelTmp.color = unlocked ? Color.white : new Color(0.38f, 0.38f, 0.42f);
             labelTmp.alignment = TextAlignmentOptions.MidlineLeft;

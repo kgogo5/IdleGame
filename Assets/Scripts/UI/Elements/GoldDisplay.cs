@@ -22,7 +22,12 @@ namespace IdleGame.UI
             }
 
             GameObject stObj = GameObject.Find("StageText");
-            if (stObj != null) _stageText = stObj.GetComponent<TextMeshProUGUI>();
+            if (stObj != null)
+            {
+                _stageText = stObj.GetComponent<TextMeshProUGUI>();
+                if (stObj.GetComponent<StageDisplay>() == null)
+                    stObj.AddComponent<StageDisplay>();
+            }
 
             if (CurrencyManager.Instance != null)
             {

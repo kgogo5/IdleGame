@@ -147,6 +147,14 @@ namespace IdleGame.UI.Panels
 
         private void RefreshSell(ItemData[] items)
         {
+            bool hasNormal = false;
+            foreach (var item in items)
+            {
+                if (item == null || item.rarity != ItemRarity.Normal || !InventoryManager.Instance.IsOwned(item)) continue;
+                if (!InventoryManager.Instance.IsEquipped(item)) { hasNormal = true; break; }
+            }
+            CreateSellAllNormalRow(hasNormal);
+
             bool hasAny = false;
             foreach (var item in items)
             {
@@ -155,6 +163,28 @@ namespace IdleGame.UI.Panels
                 CreateSellRow(item);
             }
             if (!hasAny) EmptyLabel("판매할 아이템 없음");
+        }
+
+        private void CreateSellAllNormalRow(bool hasNormal)
+        {
+            GameObject row = new GameObject("SellAllNormal_Row");
+            row.transform.SetParent(_listContent, false);
+            RectTransform rt = row.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(0, 80);
+            row.AddComponent<Image>().color = new Color(0.10f, 0.10f, 0.14f);
+
+            GameObject btn = UIHelper.MakeButton(row.transform,
+                "노말 아이템 전부 판매", 30,
+                hasNormal ? new Color(0.45f, 0.20f, 0.08f) : new Color(0.22f, 0.22f, 0.22f));
+            RectTransform brt = btn.GetComponent<RectTransform>();
+            brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(1, 1);
+            brt.offsetMin = new Vector2(14, 10); brt.offsetMax = new Vector2(-14, -10);
+
+            var b = btn.GetComponent<Button>();
+            if (hasNormal)
+                b.onClick.AddListener(() => InventoryManager.Instance.SellAllByRarity(ItemRarity.Normal));
+            else
+                b.interactable = false;
         }
 
         private void CreateBuyRow(ItemData item)
@@ -186,11 +216,18 @@ namespace IdleGame.UI.Panels
 
         private void CreateSellRow(ItemData item)
         {
+            bool isEquipped = !item.isStackable && InventoryManager.Instance.IsEquipped(item);
+
             GameObject row = MakeRow(item.name);
+            row.GetComponent<Image>().color = isEquipped
+                ? new Color(0.10f, 0.18f, 0.15f)   // 장착 중: 초록 틴트
+                : new Color(0.13f, 0.13f, 0.18f);
+
             int owned = InventoryManager.Instance.GetCount(item);
+            string equippedTag = isEquipped ? "  <color=#00DD88>[장착 중]</color>" : "";
             string nameText = item.isStackable
                 ? $"{item.itemName}  [보유: {owned}]"
-                : $"<color=#{ColorUtility.ToHtmlStringRGB(item.rarity.ToColor())}>[{item.rarity.ToKorean()}]</color> {item.itemName}  [보유: {owned}]";
+                : $"<color=#{ColorUtility.ToHtmlStringRGB(item.rarity.ToColor())}>[{item.rarity.ToKorean()}]</color> {item.itemName}{equippedTag}  [보유: {owned}]";
 
             RowLabel(row.transform, nameText, NAME_F, Color.white,
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
@@ -200,12 +237,21 @@ namespace IdleGame.UI.Panels
                 anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-(BTN_W + 18), -80));
 
-            GameObject btn = UIHelper.MakeButton(row.transform,
+            if (isEquipped)
+            {
+                GameObject btn = UIHelper.MakeButton(row.transform,
+                    "장착 중", (int)BTN_F, new Color(0.22f, 0.22f, 0.22f));
+                SetBtnPos(btn, BTN_W, BTN_H);
+                btn.GetComponent<Button>().interactable = false;
+                return;
+            }
+
+            GameObject sellBtn = UIHelper.MakeButton(row.transform,
                 $"판매\n{NumberFormatter.Format(item.sellPrice)}G", (int)BTN_F,
                 new Color(0.6f, 0.3f, 0.1f));
-            SetBtnPos(btn, BTN_W, BTN_H);
+            SetBtnPos(sellBtn, BTN_W, BTN_H);
 
-            var et = btn.AddComponent<EventTrigger>();
+            var et = sellBtn.AddComponent<EventTrigger>();
             AddPtrEvent(et, EventTriggerType.PointerDown,
                 _ => { _holdActivated = false; _holdSellRoutine = StartCoroutine(HoldSell(item)); });
             AddPtrEvent(et, EventTriggerType.PointerUp,

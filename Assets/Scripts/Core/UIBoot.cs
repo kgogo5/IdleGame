@@ -56,7 +56,17 @@ namespace IdleGame.Core
             Transform existing = canvasTransform.Find("ContentArea");
             if (existing != null) { Debug.Log("UIBoot: ContentArea already exists"); return; }
 
-            // ContentArea: 화면 전체 (nav 바 위까지)
+            // 통화 바: 최상단 65px (비전투 탭에서만 표시)
+            GameObject barObj = new GameObject("PanelCurrencyBar");
+            barObj.transform.SetParent(canvasTransform, false);
+            RectTransform barRt = barObj.AddComponent<RectTransform>();
+            barRt.anchorMin = new Vector2(0, 1);
+            barRt.anchorMax = new Vector2(1, 1);
+            barRt.offsetMin = new Vector2(0, -65);
+            barRt.offsetMax = new Vector2(0, 0);
+            barObj.AddComponent<PanelCurrencyBar>();
+
+            // ContentArea: 통화 바 아래 ~ nav 바 위
             GameObject contentAreaObj = new GameObject("ContentArea");
             contentAreaObj.transform.SetParent(canvasTransform, false);
             contentAreaObj.transform.SetSiblingIndex(navPanel.GetSiblingIndex());
@@ -65,7 +75,7 @@ namespace IdleGame.Core
             rt.anchorMin = new Vector2(0, 0);
             rt.anchorMax = new Vector2(1, 1);
             rt.offsetMin = new Vector2(0, 100); // nav 바 높이
-            rt.offsetMax = new Vector2(0, 0);   // 최상단까지
+            rt.offsetMax = new Vector2(0, -65); // 통화 바 높이
 
             // 패널 뒤 배경색 (게임 씬이 비치지 않도록)
             Image bg = contentAreaObj.AddComponent<Image>();
@@ -92,6 +102,7 @@ namespace IdleGame.Core
             NavigationController nav = navPanel.GetComponent<NavigationController>();
             if (nav == null) nav = navPanel.gameObject.AddComponent<NavigationController>();
             if (hudPanel != null) nav.SetHudPanel(hudPanel);
+            nav.SetCurrencyBar(barObj);
             nav.Initialize(contentAreaObj.transform);
 
             // 아이템 획득 토스트 매니저

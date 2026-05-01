@@ -58,9 +58,14 @@ namespace IdleGame.Core
             _bossData.spriteSize  = new Vector2(2f, 2f);
             _bossData.dropChance  = 0.8f;               // 보스는 80% 드랍
             _bossData.normalWeight    = 0f;
-            _bossData.rareWeight      = 40f;
-            _bossData.uniqueWeight    = 45f;
+            _bossData.rareWeight      = 30f;
+            _bossData.uniqueWeight    = 40f;
             _bossData.legendaryWeight = 15f;
+            _bossData.customDrops = new Data.DropEntry[]
+            {
+                new Data.DropEntry { itemId = "소모_드랍부적",   weight = 10f },
+                new Data.DropEntry { itemId = "소모_보스소환서", weight = 5f  },
+            };
         }
 
         private void Start()
@@ -111,15 +116,8 @@ namespace IdleGame.Core
             Stage = stage;
             _forceNormal = false;
             PlayerPrefs.SetInt("currentStage", Stage);
-
-            if (CurrentMonster != null)
-            {
-                Destroy(CurrentMonster.gameObject);
-                CurrentMonster = null;
-            }
-
             OnStageChanged?.Invoke(Stage);
-            SpawnMonster();
+            // 현재 몬스터는 유지 — 다음 스폰부터 새 스테이지 적용
         }
 
         public void Flee()
@@ -148,7 +146,8 @@ namespace IdleGame.Core
                 return;
             }
 
-            bool isBossSpawn = !_forceNormal && (UnityEngine.Random.value < BOSS_SPAWN_CHANCE);
+            float bossChance = BOSS_SPAWN_CHANCE + (float)(PlayerStats.Instance?.BossSpawnRateBonus ?? 0);
+            bool isBossSpawn = !_forceNormal && (UnityEngine.Random.value < bossChance);
             _forceNormal = false;
             MonsterData data = isBossSpawn
                 ? _bossData

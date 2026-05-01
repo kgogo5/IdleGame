@@ -17,9 +17,11 @@ namespace IdleGame.UI
         private Button[]      _navButtons;
         private Transform     _contentArea;
         private GameObject    _hudPanel;
+        private GameObject    _currencyBar;
         private int           _activeTab = BATTLE_TAB;
 
         public void SetHudPanel(GameObject hud) => _hudPanel = hud;
+        public void SetCurrencyBar(GameObject bar) => _currencyBar = bar;
 
         public void Initialize(Transform contentArea)
         {
@@ -85,9 +87,11 @@ namespace IdleGame.UI
 
             bool isBattle = index == BATTLE_TAB;
 
-            // HUD는 전투 탭에서만 표시
+            // HUD는 전투 탭에서만 표시, 통화 바는 그 반대
             if (_hudPanel != null)
                 _hudPanel.SetActive(isBattle);
+            if (_currencyBar != null)
+                _currencyBar.SetActive(!isBattle);
 
             // 전투 탭일 때 콘텐츠 영역 완전히 숨김 → 몬스터 클릭 가능
             if (_contentArea != null)

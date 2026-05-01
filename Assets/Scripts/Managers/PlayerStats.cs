@@ -30,6 +30,8 @@ namespace IdleGame.Managers
         private double _autoDamagePct;
         private double _autoAttackSpeedPct;
         private double _goldMultiplierPct;
+        private double _dropRatePct;
+        private double _bossSpawnRatePct;
 
         public double ClickDamage     => (_baseClickDamage     + _clickDamageFlat)     * (1 + _clickDamagePct);
         public double AutoDamage      => (_baseAutoDamage      + _autoDamageFlat)      * (1 + _autoDamagePct);
@@ -43,6 +45,9 @@ namespace IdleGame.Managers
 
         public float  ClickCooldown      => (float)(1.0 / AttackSpeed);
         public float  AutoAttackInterval => (float)(1.0 / AutoAttackSpeed);
+
+        public double DropRateMultiplier => 1.0 + _dropRatePct;
+        public double BossSpawnRateBonus => _bossSpawnRatePct;
 
         // 전투력: 클릭DPS + 자동DPS
         public double CombatPower => ClickDamage * AttackSpeed + AutoDamage * AutoAttackSpeed;
@@ -91,6 +96,8 @@ namespace IdleGame.Managers
                 case StatType.AutoDamage:      _autoDamagePct      += percent; break;
                 case StatType.AutoAttackSpeed: _autoAttackSpeedPct += percent; break;
                 case StatType.GoldMultiplier:  _goldMultiplierPct  += percent; break;
+                case StatType.DropRate:        _dropRatePct        += percent; break;
+                case StatType.BossSpawnRate:   _bossSpawnRatePct   += percent; break;
             }
             OnStatsChanged?.Invoke();
         }
@@ -98,6 +105,7 @@ namespace IdleGame.Managers
         public void ResetEquipModifiers()
         {
             _clickDamagePct = _attackSpeedPct = _autoDamagePct = _autoAttackSpeedPct = _goldMultiplierPct = 0;
+            _dropRatePct = _bossSpawnRatePct = 0;
             OnStatsChanged?.Invoke();
         }
 
@@ -105,6 +113,7 @@ namespace IdleGame.Managers
         {
             _clickDamageFlat = _attackSpeedFlat = _autoDamageFlat = _autoAttackSpeedFlat = _goldMultiplierFlat = 0;
             _clickDamagePct  = _attackSpeedPct  = _autoDamagePct  = _autoAttackSpeedPct  = _goldMultiplierPct  = 0;
+            _dropRatePct = _bossSpawnRatePct = 0;
             OnStatsChanged?.Invoke();
         }
 
