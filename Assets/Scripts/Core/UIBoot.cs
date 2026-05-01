@@ -94,6 +94,13 @@ namespace IdleGame.Core
             if (hudPanel != null) nav.SetHudPanel(hudPanel);
             nav.Initialize(contentAreaObj.transform);
 
+            // 아이템 획득 토스트 매니저
+            if (UI.ItemToastManager.Instance == null)
+            {
+                GameObject toastMgrObj = new GameObject("ItemToastManager");
+                toastMgrObj.AddComponent<UI.ItemToastManager>();
+            }
+
             Debug.Log("UIBoot: Navigation initialized");
         }
     }

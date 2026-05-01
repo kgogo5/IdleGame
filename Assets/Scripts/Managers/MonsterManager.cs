@@ -14,8 +14,7 @@ namespace IdleGame.Core
         [SerializeField] private MonsterData[] _monsterDataList;
         [SerializeField] private Transform _spawnPoint;
 
-        private const int KILLS_PER_STAGE = 30;
-        private int _killsInStage = 0;
+        private const float BOSS_SPAWN_CHANCE = 0.03f; // 3% 확률로 보스 등장
         private bool _forceNormal = false;
 
         private MonsterData _bossData;
@@ -71,10 +70,9 @@ namespace IdleGame.Core
 
         public void OnMonsterKilled()
         {
-            _killsInStage++;
-            if (_killsInStage >= KILLS_PER_STAGE)
+            // 보스를 처치했을 때만 스테이지 진행
+            if (CurrentMonster != null && CurrentMonster.IsBoss)
             {
-                _killsInStage = 0;
                 Stage++;
                 PlayerPrefs.SetInt("currentStage", Stage);
 
@@ -90,11 +88,27 @@ namespace IdleGame.Core
             SpawnMonster();
         }
 
+        public void ResetData()
+        {
+            Stage = 1;
+            MaxStageReached = 1;
+            _forceNormal = false;
+
+            if (CurrentMonster != null)
+            {
+                Destroy(CurrentMonster.gameObject);
+                CurrentMonster = null;
+            }
+
+            OnStageChanged?.Invoke(Stage);
+            OnMaxStageChanged?.Invoke(MaxStageReached);
+            SpawnMonster();
+        }
+
         public void SelectStage(int stage)
         {
             if (stage < 1 || stage > MaxStageReached) return;
             Stage = stage;
-            _killsInStage = 0;
             _forceNormal = false;
             PlayerPrefs.SetInt("currentStage", Stage);
 
@@ -112,12 +126,17 @@ namespace IdleGame.Core
         {
             if (!CanFlee()) return;
             CurrencyManager.Instance.SpendGold(FleeCost);
+
+            bool fleedFromBoss = CurrentMonster != null && CurrentMonster.IsBoss;
+
             if (CurrentMonster != null)
             {
                 Destroy(CurrentMonster.gameObject);
                 CurrentMonster = null;
             }
-            _forceNormal = true;
+
+            _forceNormal = true; // 도망 직후 한 마리는 반드시 잡몹
+
             SpawnMonster();
         }
 
@@ -129,7 +148,7 @@ namespace IdleGame.Core
                 return;
             }
 
-            bool isBossSpawn = !_forceNormal && (_killsInStage == KILLS_PER_STAGE - 1);
+            bool isBossSpawn = !_forceNormal && (UnityEngine.Random.value < BOSS_SPAWN_CHANCE);
             _forceNormal = false;
             MonsterData data = isBossSpawn
                 ? _bossData

@@ -507,6 +507,7 @@ namespace IdleGame.UI.Panels
             CurrencyManager.Instance?.ResetData();
             UpgradeManager.Instance?.ResetData();
             InventoryManager.Instance?.ResetData();
+            MonsterManager.Instance?.ResetData();
             PlayerPrefs.DeleteAll(); PlayerPrefs.Save();
             if (_resetBtnTmp != null) _resetBtnTmp.text = "데이터 초기화";
             CloseSettings();

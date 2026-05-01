@@ -25,6 +25,7 @@ namespace IdleGame.Managers
 
         public event Action OnInventoryChanged;
         public event Action OnEquipChanged;
+        public event Action<ItemData> OnItemAcquired;
 
         private void Awake()
         {
@@ -44,155 +45,164 @@ namespace IdleGame.Managers
         {
             var list = new List<ItemData>();
 
-            // 장비 아이템 (% 스탯 기반)
-            ItemData Equip(string id, string displayName, string desc, double buy, double sell,
-                           ItemRarity rarity, EquipSlot slot, string setId,
-                           params (StatType t, float p)[] mods)
+            // 장비 아이템 — sell < 0이면 buy의 30% 자동 계산, 명시하면 그 값 사용
+            ItemData Equip(string id, string displayName, string desc, double buy, double sell = -1,
+                           ItemRarity rarity = ItemRarity.Normal, EquipSlot slot = EquipSlot.Weapon,
+                           string setId = "", params (StatType t, float p)[] mods)
             {
                 var d = ScriptableObject.CreateInstance<ItemData>();
                 d.name = id; d.itemName = displayName; d.description = desc;
-                d.buyPrice = buy; d.sellPrice = sell;
+                d.buyPrice  = buy;
+                // buy > 0 이면 무조건 30%, buy = 0(드랍전용)이면 명시된 sell 값 사용
+                d.sellPrice = buy > 0 ? System.Math.Round(buy * 0.3) : (sell < 0 ? 0 : sell);
                 d.isStackable = false; d.rarity = rarity; d.slot = slot; d.setId = setId;
                 d.modifiers = mods.Select(m => new StatModifier { statType = m.t, percent = m.p }).ToArray();
                 return d;
             }
 
-            // 소모품 (% 스탯 기반, 중복 구매 가능, 등급 없음)
-            ItemData Consumable(string id, string displayName, double buy, double sell,
+            // 소모품 — sell < 0이면 buy의 30% 자동 계산
+            ItemData Consumable(string id, string displayName, double buy, double sell = -1,
                                 params (StatType t, float p)[] mods)
             {
                 var d = ScriptableObject.CreateInstance<ItemData>();
                 d.name = id; d.itemName = displayName;
-                d.buyPrice = buy; d.sellPrice = sell;
+                d.buyPrice  = buy;
+                d.sellPrice = buy > 0 ? System.Math.Round(buy * 0.3) : (sell < 0 ? 0 : sell);
                 d.isStackable = true; d.rarity = ItemRarity.Normal;
                 d.modifiers = mods.Select(m => new StatModifier { statType = m.t, percent = m.p }).ToArray();
                 d.description = string.Join(", ", d.modifiers.Select(m => m.ToDisplayString()));
                 return d;
             }
 
-            // ── 노말 — 개별 아이템 (세트 없음, 단순 미미한 스탯) ──
+            // ── 노말 — 개별 아이템 (초반 드랍, 약한 스탯) ──
             var 전사검 = Equip("전사_검", "녹슨 검",
-                "+8% 클릭 데미지",
-                500, 150, ItemRarity.Normal, EquipSlot.Weapon, "",
-                (StatType.ClickDamage, 0.08f));
+                "+3% 클릭 데미지",
+                500, -1, ItemRarity.Normal, EquipSlot.Weapon, "",
+                (StatType.ClickDamage, 0.03f));
             전사검.particleEffectId = "hit_slash";
             list.Add(전사검);
 
             var 전사갑옷 = Equip("전사_갑옷", "낡은 갑옷",
-                "+6% 자동공격 데미지",
-                800, 250, ItemRarity.Normal, EquipSlot.Armor, "",
-                (StatType.AutoDamage, 0.06f));
+                "+3% 자동공격 데미지",
+                800, -1, ItemRarity.Normal, EquipSlot.Armor, "",
+                (StatType.AutoDamage, 0.03f));
             list.Add(전사갑옷);
 
             var 전사장갑 = Equip("전사_장갑", "헝겊 장갑",
-                "+6% 클릭 데미지",
-                400, 120, ItemRarity.Normal, EquipSlot.Gloves, "",
-                (StatType.ClickDamage, 0.06f));
+                "+3% 클릭 데미지",
+                400, -1, ItemRarity.Normal, EquipSlot.Gloves, "",
+                (StatType.ClickDamage, 0.03f));
             전사장갑.particleEffectId = "hit_punch";
             list.Add(전사장갑);
 
             var 마법투구 = Equip("마법_투구", "천 투구",
-                "+6% 자동공격 데미지",
-                600, 180, ItemRarity.Normal, EquipSlot.Helmet, "",
-                (StatType.AutoDamage, 0.06f));
+                "+3% 자동공격 데미지",
+                600, -1, ItemRarity.Normal, EquipSlot.Helmet, "",
+                (StatType.AutoDamage, 0.03f));
             list.Add(마법투구);
 
             var 마법반지 = Equip("마법_반지", "구리 반지",
-                "+8% 골드 배율",
-                500, 150, ItemRarity.Normal, EquipSlot.Ring, "",
-                (StatType.GoldMultiplier, 0.08f));
+                "+4% 골드 배율",
+                500, -1, ItemRarity.Normal, EquipSlot.Ring, "",
+                (StatType.GoldMultiplier, 0.04f));
             list.Add(마법반지);
 
             var 마법목걸이 = Equip("마법_목걸이", "나무 목걸이",
-                "+8% 골드 배율",
-                700, 210, ItemRarity.Normal, EquipSlot.Amulet, "",
-                (StatType.GoldMultiplier, 0.08f));
+                "+4% 골드 배율",
+                700, -1, ItemRarity.Normal, EquipSlot.Amulet, "",
+                (StatType.GoldMultiplier, 0.04f));
             list.Add(마법목걸이);
 
-            // ── 레어 세트 — 전사 (상점, 클릭↑ / 골드↓) ──
+            // ── 레어 세트 — 전사 (상점) ──
+            // 정예검: 강한 타격 → 공격속도 감소 (무거운 검)
             var 레어검 = Equip("레어_검", "정예검",
-                "+30% 클릭 데미지  -12% 골드 배율",
+                "+12% 클릭 데미지  -6% 공격속도",
                 8_000, 3_000, ItemRarity.Rare, EquipSlot.Weapon, "레어_전사세트",
-                (StatType.ClickDamage, 0.30f), (StatType.GoldMultiplier, -0.12f));
+                (StatType.ClickDamage, 0.12f), (StatType.AttackSpeed, -0.06f));
             레어검.particleEffectId = "hit_slash";
             list.Add(레어검);
 
+            // 강화 갑옷: 강한 자동공격 → 자동공속 감소 (묵직한 갑옷)
             var 레어갑옷 = Equip("레어_갑옷", "강화 갑옷",
-                "+20% 자동공격 데미지  -10% 골드 배율",
+                "+12% 자동공격 데미지  -6% 자동공격속도",
                 10_000, 4_000, ItemRarity.Rare, EquipSlot.Armor, "레어_전사세트",
-                (StatType.AutoDamage, 0.20f), (StatType.GoldMultiplier, -0.10f));
+                (StatType.AutoDamage, 0.12f), (StatType.AutoAttackSpeed, -0.06f));
             list.Add(레어갑옷);
 
+            // 전투 장갑: 공격속도 증가 → 클릭 데미지 소폭 감소 (빠른 주먹)
             var 레어장갑 = Equip("레어_장갑", "전투 장갑",
-                "+25% 클릭 데미지  -10% 골드 배율",
+                "+10% 공격속도  -3% 클릭 데미지",
                 6_000, 2_200, ItemRarity.Rare, EquipSlot.Gloves, "레어_전사세트",
-                (StatType.ClickDamage, 0.25f), (StatType.GoldMultiplier, -0.10f));
+                (StatType.AttackSpeed, 0.10f), (StatType.ClickDamage, -0.03f));
             레어장갑.particleEffectId = "hit_punch";
             list.Add(레어장갑);
 
-            // ── 레어 세트 — 마법사 (상점, 골드↑ / 클릭↓) ──
+            // ── 레어 세트 — 마법사 (상점) ──
+            // 은빛 반지: 골드 집중 → 자동공속 소폭 감소
             var 레어반지 = Equip("레어_반지", "은빛 반지",
-                "+25% 골드 배율  -10% 클릭 데미지",
+                "+10% 골드 배율  -4% 자동공격속도",
                 7_000, 2_500, ItemRarity.Rare, EquipSlot.Ring, "레어_마법세트",
-                (StatType.GoldMultiplier, 0.25f), (StatType.ClickDamage, -0.10f));
+                (StatType.GoldMultiplier, 0.10f), (StatType.AutoAttackSpeed, -0.04f));
             레어반지.particleEffectId = "hit_magic";
             list.Add(레어반지);
 
+            // 마법사의 모자: 자동공격 데미지 + 자동공속 동반 상승 (마법 증폭, 단점 없음)
             var 레어투구 = Equip("레어_투구", "마법사의 모자",
-                "+20% 자동공격 데미지  -8% 클릭 데미지",
+                "+8% 자동공격 데미지  +6% 자동공격속도",
                 8_000, 3_000, ItemRarity.Rare, EquipSlot.Helmet, "레어_마법세트",
-                (StatType.AutoDamage, 0.20f), (StatType.ClickDamage, -0.08f));
+                (StatType.AutoDamage, 0.08f), (StatType.AutoAttackSpeed, 0.06f));
             레어투구.particleEffectId = "hit_magic";
             list.Add(레어투구);
 
+            // 마나 목걸이: 높은 골드 → 공격속도 소폭 감소
             var 레어목걸이 = Equip("레어_목걸이", "마나 목걸이",
-                "+25% 골드 배율  -10% 클릭 데미지",
+                "+12% 골드 배율  -3% 공격속도",
                 9_000, 3_500, ItemRarity.Rare, EquipSlot.Amulet, "레어_마법세트",
-                (StatType.GoldMultiplier, 0.25f), (StatType.ClickDamage, -0.10f));
+                (StatType.GoldMultiplier, 0.12f), (StatType.AttackSpeed, -0.03f));
             레어목걸이.particleEffectId = "hit_magic";
             list.Add(레어목걸이);
 
             // ── 레어 개별 — 드랍 전용 (스테이지별) ──
 
-            // Stage 3: 뱀의 단검 (Jade Tan Do) — 빠른 클릭, 자동 희생
+            // Stage 3: 뱀의 단검 — 빠른 단검, 공속↑ 대신 클릭 데미지↓
             var 드랍레어_검A = Equip("드랍레어_검A", "뱀의 단검",
-                "+28% 클릭 데미지  -8% 자동공격 데미지",
+                "+15% 공격속도  -5% 클릭 데미지",
                 0, 4_000, ItemRarity.Rare, EquipSlot.Weapon, "",
-                (StatType.ClickDamage, 0.28f), (StatType.AutoDamage, -0.08f));
+                (StatType.AttackSpeed, 0.15f), (StatType.ClickDamage, -0.05f));
             드랍레어_검A.particleEffectId = "hit_stab";
             드랍레어_검A.minDropStage = 3;
             list.Add(드랍레어_검A);
 
-            // Stage 3: 전사의 고리 (Angelic Ring) — 균형, 단점 없는 대신 약함
+            // Stage 3: 전사의 고리 — 균형형, 클릭+자동 데미지 소폭 증가 (단점 없음)
             var 드랍레어_반지A = Equip("드랍레어_반지A", "전사의 고리",
-                "+14% 클릭 데미지  +14% 자동공격 데미지",
+                "+8% 클릭 데미지  +8% 자동공격 데미지",
                 0, 3_500, ItemRarity.Rare, EquipSlot.Ring, "",
-                (StatType.ClickDamage, 0.14f), (StatType.AutoDamage, 0.14f));
+                (StatType.ClickDamage, 0.08f), (StatType.AutoDamage, 0.08f));
             드랍레어_반지A.minDropStage = 3;
             list.Add(드랍레어_반지A);
 
-            // Stage 4: 강철 방어구 (Steel Carapace) — 자동+클릭, 골드 희생
+            // Stage 4: 강철 방어구 — 강한 자동공격, 무거워서 자동공속↓
             var 드랍레어_갑옷A = Equip("드랍레어_갑옷A", "강철 방어구",
-                "+22% 자동공격 데미지  +8% 클릭 데미지  -15% 골드 배율",
+                "+14% 자동공격 데미지  -8% 자동공격속도",
                 0, 5_000, ItemRarity.Rare, EquipSlot.Armor, "",
-                (StatType.AutoDamage, 0.22f), (StatType.ClickDamage, 0.08f), (StatType.GoldMultiplier, -0.15f));
+                (StatType.AutoDamage, 0.14f), (StatType.AutoAttackSpeed, -0.08f));
             드랍레어_갑옷A.minDropStage = 4;
             list.Add(드랍레어_갑옷A);
 
-            // Stage 4: 행운의 장갑 (Chance Guards) — 골드+클릭, 단점 없는 대신 약함
+            // Stage 4: 행운의 장갑 — 빠른 공속+골드, 단점 없음 (지원형)
             var 드랍레어_장갑A = Equip("드랍레어_장갑A", "행운의 장갑",
-                "+15% 골드 배율  +15% 클릭 데미지",
+                "+8% 골드 배율  +8% 공격속도",
                 0, 4_000, ItemRarity.Rare, EquipSlot.Gloves, "",
-                (StatType.GoldMultiplier, 0.15f), (StatType.ClickDamage, 0.15f));
+                (StatType.GoldMultiplier, 0.08f), (StatType.AttackSpeed, 0.08f));
             드랍레어_장갑A.particleEffectId = "hit_punch";
             드랍레어_장갑A.minDropStage = 4;
             list.Add(드랍레어_장갑A);
 
-            // Stage 5: 명예의 투구 (Rockstopper) — 자동+골드, 클릭 희생
+            // Stage 5: 명예의 투구 — 자동공격 데미지+공속 동반 상승, 클릭 소폭 감소 (자동 특화)
             var 드랍레어_투구A = Equip("드랍레어_투구A", "명예의 투구",
-                "+20% 자동공격 데미지  +10% 골드 배율  -10% 클릭 데미지",
+                "+10% 자동공격 데미지  +8% 자동공격속도  -4% 클릭 데미지",
                 0, 4_500, ItemRarity.Rare, EquipSlot.Helmet, "",
-                (StatType.AutoDamage, 0.20f), (StatType.GoldMultiplier, 0.10f), (StatType.ClickDamage, -0.10f));
+                (StatType.AutoDamage, 0.10f), (StatType.AutoAttackSpeed, 0.08f), (StatType.ClickDamage, -0.04f));
             드랍레어_투구A.minDropStage = 5;
             list.Add(드랍레어_투구A);
 
@@ -304,95 +314,95 @@ namespace IdleGame.Managers
             유니크4_검.minDropStage = 10;
             list.Add(유니크4_검);
 
-            // ── 레전더리 — 신화 세트 (최강 공격+골드, 자동공격 극약) ──
+            // ── 레전더리 — 신화 세트 (클릭 특화) ──
             var 레전검 = Equip("레전_검", "신화의 검",
-                "+150% 클릭 데미지  +80% 자동공격 데미지  -40% 골드 배율",
+                "+150% 클릭 데미지  -10% 공격속도",
                 0, 100_000, ItemRarity.Legendary, EquipSlot.Weapon, "레전_신화세트",
-                (StatType.ClickDamage, 1.50f), (StatType.AutoDamage, 0.80f), (StatType.GoldMultiplier, -0.40f));
+                (StatType.ClickDamage, 1.50f), (StatType.AttackSpeed, -0.10f));
             레전검.particleEffectId = "hit_magic";
             list.Add(레전검);
 
             var 레전반지 = Equip("레전_반지", "황금의 유산",
-                "+130% 골드 배율  +80% 클릭 데미지  -40% 자동공격 데미지",
+                "+130% 골드 배율  +80% 클릭 데미지  -8% 자동공격속도",
                 0, 120_000, ItemRarity.Legendary, EquipSlot.Ring, "레전_신화세트",
-                (StatType.GoldMultiplier, 1.30f), (StatType.ClickDamage, 0.80f), (StatType.AutoDamage, -0.40f));
+                (StatType.GoldMultiplier, 1.30f), (StatType.ClickDamage, 0.80f), (StatType.AutoAttackSpeed, -0.08f));
             레전반지.particleEffectId = "hit_magic";
             list.Add(레전반지);
 
             // ── 레전더리 — 폭풍 세트 (자동공격 극한 특화, 클릭 희생) ──
 
-            // Stage 8: 폭풍의 활 (Windforce) — 폭풍 세트
+            // Stage 8: 폭풍의 활 (Windforce) — 폭풍 세트, 강한 자동공격 → 자동공속 소폭 감소
             var 레전2_검 = Equip("레전2_검", "폭풍의 활",
-                "+100% 자동공격 데미지  +80% 클릭 데미지  -30% 골드 배율",
+                "+100% 자동공격 데미지  +80% 클릭 데미지  -10% 자동공격속도",
                 0, 150_000, ItemRarity.Legendary, EquipSlot.Weapon, "레전_폭풍세트",
-                (StatType.AutoDamage, 1.00f), (StatType.ClickDamage, 0.80f), (StatType.GoldMultiplier, -0.30f));
+                (StatType.AutoDamage, 1.00f), (StatType.ClickDamage, 0.80f), (StatType.AutoAttackSpeed, -0.10f));
             레전2_검.particleEffectId = "hit_slash";
             레전2_검.minDropStage = 8;
             list.Add(레전2_검);
 
             // Stage 12: 하늘의 갑옷 (Tyrael's Might) — 폭풍 세트
             var 레전2_갑옷 = Equip("레전2_갑옷", "하늘의 갑옷",
-                "+130% 자동공격 데미지  +80% 골드 배율  -60% 클릭 데미지",
+                "+130% 자동공격 데미지  +80% 골드 배율  -15% 클릭 데미지",
                 0, 180_000, ItemRarity.Legendary, EquipSlot.Armor, "레전_폭풍세트",
-                (StatType.AutoDamage, 1.30f), (StatType.GoldMultiplier, 0.80f), (StatType.ClickDamage, -0.60f));
+                (StatType.AutoDamage, 1.30f), (StatType.GoldMultiplier, 0.80f), (StatType.ClickDamage, -0.15f));
             레전2_갑옷.minDropStage = 12;
             list.Add(레전2_갑옷);
 
             // ── 레전더리 개별 ──
 
-            // Stage 10: 만화경의 목걸이 — 클릭+골드 최강, 자동 희생
+            // Stage 10: 만화경의 목걸이 — 클릭+골드 최강, 자동공속 소폭 감소
             var 레전3_목걸이 = Equip("레전3_목걸이", "만화경의 목걸이",
-                "+120% 클릭 데미지  +120% 골드 배율  -70% 자동공격 데미지",
+                "+120% 클릭 데미지  +120% 골드 배율  -10% 자동공격속도",
                 0, 200_000, ItemRarity.Legendary, EquipSlot.Amulet, "",
-                (StatType.ClickDamage, 1.20f), (StatType.GoldMultiplier, 1.20f), (StatType.AutoDamage, -0.70f));
+                (StatType.ClickDamage, 1.20f), (StatType.GoldMultiplier, 1.20f), (StatType.AutoAttackSpeed, -0.10f));
             레전3_목걸이.particleEffectId = "hit_magic";
             레전3_목걸이.minDropStage = 10;
             list.Add(레전3_목걸이);
 
-            // Stage 10: 바알의 철권 (Bul-Kathos') — 순수 전투 특화
+            // Stage 10: 바알의 철권 (Bul-Kathos') — 순수 전투 특화, 공속 소폭 감소
             var 레전3_장갑 = Equip("레전3_장갑", "바알의 철권",
-                "+120% 클릭 데미지  +100% 자동공격 데미지  -60% 골드 배율",
+                "+120% 클릭 데미지  +100% 자동공격 데미지  -10% 공격속도",
                 0, 170_000, ItemRarity.Legendary, EquipSlot.Gloves, "",
-                (StatType.ClickDamage, 1.20f), (StatType.AutoDamage, 1.00f), (StatType.GoldMultiplier, -0.60f));
+                (StatType.ClickDamage, 1.20f), (StatType.AutoDamage, 1.00f), (StatType.AttackSpeed, -0.10f));
             레전3_장갑.particleEffectId = "hit_punch";
             레전3_장갑.minDropStage = 10;
             list.Add(레전3_장갑);
 
-            // Stage 12: 도깨비불 반지 (Wisp Projector) — 순수 골드 특화
+            // Stage 12: 도깨비불 반지 (Wisp Projector) — 순수 골드 특화, 공속 소폭 감소
             var 레전3_반지 = Equip("레전3_반지", "도깨비불 반지",
-                "+150% 골드 배율  +80% 클릭 데미지  -50% 자동공격 데미지",
+                "+150% 골드 배율  +80% 클릭 데미지  -8% 공격속도",
                 0, 220_000, ItemRarity.Legendary, EquipSlot.Ring, "",
-                (StatType.GoldMultiplier, 1.50f), (StatType.ClickDamage, 0.80f), (StatType.AutoDamage, -0.50f));
+                (StatType.GoldMultiplier, 1.50f), (StatType.ClickDamage, 0.80f), (StatType.AttackSpeed, -0.08f));
             레전3_반지.particleEffectId = "hit_magic";
             레전3_반지.minDropStage = 12;
             list.Add(레전3_반지);
 
-            // Stage 12: 안다리엘의 투구 (Andariel's Visage) — 공격속도+클릭, 골드 희생
+            // Stage 12: 안다리엘의 투구 (Andariel's Visage) — 공격속도+클릭, 자동공속 소폭 감소
             var 레전3_투구 = Equip("레전3_투구", "안다리엘의 면상",
-                "+100% 클릭 데미지  +60% 공격속도  -50% 골드 배율",
+                "+100% 클릭 데미지  +60% 공격속도  -8% 자동공격속도",
                 0, 190_000, ItemRarity.Legendary, EquipSlot.Helmet, "",
-                (StatType.ClickDamage, 1.00f), (StatType.AttackSpeed, 0.60f), (StatType.GoldMultiplier, -0.50f));
+                (StatType.ClickDamage, 1.00f), (StatType.AttackSpeed, 0.60f), (StatType.AutoAttackSpeed, -0.08f));
             레전3_투구.minDropStage = 12;
             list.Add(레전3_투구);
 
-            // ── 소모품 (% 기반, 중복 구매 가능) ──
+            // ── 소모품 (드랍 전용 — 상점 미판매) ──
             list.Add(Consumable("소모_자동소", "자동 장치",
-                2_000, 700, (StatType.AutoDamage, 0.15f)));
+                0, 500, (StatType.AutoDamage, 0.15f)));
 
             list.Add(Consumable("소모_자동대", "자동 포탑",
-                10_000, 3_500, (StatType.AutoDamage, 0.40f)));
+                0, 2_000, (StatType.AutoDamage, 0.40f)));
 
             list.Add(Consumable("소모_골드", "황금 코인",
-                1_000, 350, (StatType.GoldMultiplier, 0.15f)));
+                0, 300, (StatType.GoldMultiplier, 0.15f)));
 
             list.Add(Consumable("소모_클릭", "클릭 부적",
-                3_000, 1_000, (StatType.ClickDamage, 0.20f)));
+                0, 800, (StatType.ClickDamage, 0.20f)));
 
             list.Add(Consumable("소모_공속", "신속의 룬",
-                5_000, 1_800, (StatType.AttackSpeed, 0.20f)));
+                0, 1_200, (StatType.AttackSpeed, 0.20f)));
 
             list.Add(Consumable("소모_자동공속", "연사의 태엽",
-                4_000, 1_400, (StatType.AutoAttackSpeed, 0.25f)));
+                0, 1_000, (StatType.AutoAttackSpeed, 0.25f)));
 
             _shopItems = list.ToArray();
         }
@@ -689,9 +699,11 @@ namespace IdleGame.Managers
             if (item.isStackable) ApplyModifiers(item, +1);
             Save();
             OnInventoryChanged?.Invoke();
+            OnItemAcquired?.Invoke(item);
         }
 
         // 특정 등급의 미보유 장비 중 랜덤 1개 지급
+        // 이미 전부 보유 중이면 그 등급 아이템 판매가만큼 골드 지급
         public void GiveRandomItem(ItemRarity rarity)
         {
             if (_shopItems == null) return;
@@ -702,12 +714,24 @@ namespace IdleGame.Managers
                          && !IsOwned(i) && i.minDropStage <= stage)
                 .ToList();
 
-            if (pool.Count == 0) return;
+            if (pool.Count == 0)
+            {
+                // 전부 보유 → 동급 아이템 판매가로 골드 보상
+                var allOfRarity = _shopItems
+                    .Where(i => i != null && !i.isStackable && i.rarity == rarity
+                             && i.minDropStage <= stage)
+                    .ToList();
+                if (allOfRarity.Count == 0) return;
+                var fallback = allOfRarity[UnityEngine.Random.Range(0, allOfRarity.Count)];
+                CurrencyManager.Instance?.AddGold(fallback.sellPrice);
+                return;
+            }
 
             var chosen = pool[UnityEngine.Random.Range(0, pool.Count)];
             _owned[chosen.name] = 1;
             Save();
             OnInventoryChanged?.Invoke();
+            OnItemAcquired?.Invoke(chosen);
         }
 
         // ── 저장 / 불러오기 ───────────────────────────────────────────────────────

@@ -7,8 +7,8 @@ namespace IdleGame.UI
 {
     public class NavigationController : MonoBehaviour
     {
-        // 탭 순서: 업그레이드 / 장비 / 전투(가운데) / 상점 / 지역
-        private static readonly string[] TAB_NAMES = { "업그레이드", "장비", "전투", "상점", "지역" };
+        // 탭 순서: 업그레이드 / 장비 / 전투(가운데) / 상점 / 업적
+        private static readonly string[] TAB_NAMES = { "업그레이드", "장비", "전투", "상점", "업적" };
         private const int BATTLE_TAB = 2;
 
         public static event Action<int> OnTabChanged;
@@ -75,7 +75,7 @@ namespace IdleGame.UI
             if (_panels[0] != null) _panels[0].AddComponent<Panels.UpgradePanelUI>();
             if (_panels[1] != null) _panels[1].AddComponent<Panels.EquipmentPanelUI>();
             if (_panels[3] != null) _panels[3].AddComponent<Panels.ShopPanelUI>();
-            if (_panels[4] != null) _panels[4].AddComponent<Panels.StageSelectPanelUI>();
+            if (_panels[4] != null) _panels[4].AddComponent<Panels.AchievementPanelUI>();
         }
 
         private void ShowTab(int index)
