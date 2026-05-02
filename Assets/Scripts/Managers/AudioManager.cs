@@ -15,6 +15,7 @@ namespace IdleGame.Managers
 
         private AudioClip _hitClip;
         private AudioClip _goldClip;
+        private string _currentBgmPath;
 
         private void Awake()
         {
@@ -59,6 +60,21 @@ namespace IdleGame.Managers
             if (SettingsManager.Instance == null) return;
             SettingsManager.Instance.OnBgmVolumeChanged -= v => bgmSource.volume = v;
             SettingsManager.Instance.OnSfxVolumeChanged -= v => sfxSource.volume = v;
+        }
+
+        // BGM을 Resources 경로로 교체 (같은 경로면 무시)
+        public void PlayBgmByPath(string resourcePath)
+        {
+            if (string.IsNullOrEmpty(resourcePath) || resourcePath == _currentBgmPath) return;
+            var clip = Resources.Load<AudioClip>(resourcePath);
+            if (clip == null)
+            {
+                Debug.LogWarning($"[AudioManager] BGM 로드 실패: Resources/{resourcePath}");
+                return;
+            }
+            _currentBgmPath = resourcePath;
+            bgmSource.clip  = clip;
+            bgmSource.Play();
         }
 
         public void PlayHit()      => PlaySfx(_hitClip);

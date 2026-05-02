@@ -11,8 +11,11 @@ namespace IdleGame.Core
         public static MonsterManager Instance { get; private set; }
 
         [SerializeField] private GameObject _monsterPrefab;
-        [SerializeField] private MonsterData[] _monsterDataList;
+        [SerializeField] private MonsterData[] _monsterDataList;    // 스테이지 설정 없을 때 기본 풀
         [SerializeField] private Transform _spawnPoint;
+
+        [Header("스테이지별 설정 (배경/BGM/몬스터)")]
+        [SerializeField] private StageConfig[] _stageConfigs;
 
         private const float BOSS_SPAWN_CHANCE = 0.03f; // 3% 확률로 보스 등장
         private bool _forceNormal = false;
@@ -68,8 +71,28 @@ namespace IdleGame.Core
             };
         }
 
+        // 현재 스테이지에 해당하는 StageConfig 반환 (없으면 null)
+        public StageConfig GetConfigForStage(int stage)
+        {
+            if (_stageConfigs == null) return null;
+            foreach (var cfg in _stageConfigs)
+                if (stage >= cfg.stageFrom && stage <= cfg.stageTo) return cfg;
+            return null;
+        }
+
+        private void ApplyStageEnvironment(int stage)
+        {
+            var cfg = GetConfigForStage(stage);
+            if (cfg == null) return;
+            if (!string.IsNullOrEmpty(cfg.backgroundPath))
+                BackgroundManager.Instance?.SetBackground(cfg.backgroundPath);
+            if (!string.IsNullOrEmpty(cfg.bgmPath))
+                AudioManager.Instance?.PlayBgmByPath(cfg.bgmPath);
+        }
+
         private void Start()
         {
+            ApplyStageEnvironment(Stage);
             SpawnMonster();
         }
 
@@ -88,6 +111,7 @@ namespace IdleGame.Core
                     OnMaxStageChanged?.Invoke(MaxStageReached);
                 }
 
+                ApplyStageEnvironment(Stage);
                 OnStageChanged?.Invoke(Stage);
             }
             SpawnMonster();
@@ -105,6 +129,7 @@ namespace IdleGame.Core
                 CurrentMonster = null;
             }
 
+            ApplyStageEnvironment(Stage);
             OnStageChanged?.Invoke(Stage);
             OnMaxStageChanged?.Invoke(MaxStageReached);
             SpawnMonster();
@@ -116,6 +141,7 @@ namespace IdleGame.Core
             Stage = stage;
             _forceNormal = false;
             PlayerPrefs.SetInt("currentStage", Stage);
+            ApplyStageEnvironment(Stage);
             OnStageChanged?.Invoke(Stage);
             // 현재 몬스터는 유지 — 다음 스폰부터 새 스테이지 적용
         }
@@ -140,7 +166,13 @@ namespace IdleGame.Core
 
         public void SpawnMonster()
         {
-            if (_monsterDataList == null || _monsterDataList.Length == 0)
+            // StageConfig에 몬스터 풀이 설정되어 있으면 우선 사용, 없으면 기본 풀
+            var cfg = GetConfigForStage(Stage);
+            MonsterData[] pool = (cfg?.monsters != null && cfg.monsters.Length > 0)
+                ? cfg.monsters
+                : _monsterDataList;
+
+            if (pool == null || pool.Length == 0)
             {
                 Debug.LogError("No monster data available!");
                 return;
@@ -151,7 +183,7 @@ namespace IdleGame.Core
             _forceNormal = false;
             MonsterData data = isBossSpawn
                 ? _bossData
-                : _monsterDataList[UnityEngine.Random.Range(0, _monsterDataList.Length)];
+                : pool[UnityEngine.Random.Range(0, pool.Length)];
 
             double hp   = isBossSpawn ? _bossData.maxHealth : data.maxHealth;
             double gold = isBossSpawn ? _bossData.goldReward * Stage : GetGoldReward(Stage);

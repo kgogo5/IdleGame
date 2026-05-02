@@ -112,6 +112,13 @@ namespace IdleGame.Core
                 toastMgrObj.AddComponent<UI.ItemToastManager>();
             }
 
+            // 배경 전환 매니저
+            if (BackgroundManager.Instance == null)
+            {
+                GameObject bmObj = new GameObject("BackgroundManager");
+                bmObj.AddComponent<BackgroundManager>();
+            }
+
             Debug.Log("UIBoot: Navigation initialized");
         }
     }
