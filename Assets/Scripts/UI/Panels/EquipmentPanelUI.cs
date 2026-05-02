@@ -34,7 +34,7 @@ namespace IdleGame.UI.Panels
             var sbRt = statBox.AddComponent<RectTransform>();
             sbRt.anchorMin = new Vector2(0, 1);
             sbRt.anchorMax = new Vector2(1, 1);
-            sbRt.offsetMin = new Vector2(10, -285);
+            sbRt.offsetMin = new Vector2(10, -325);
             sbRt.offsetMax = new Vector2(-10, -100);
             statBox.AddComponent<Image>().color = new Color(0.08f, 0.14f, 0.22f, 1f);
 
@@ -74,7 +74,7 @@ namespace IdleGame.UI.Panels
             sr.anchorMin = Vector2.zero;
             sr.anchorMax = Vector2.one;
             sr.offsetMin = new Vector2(10, 10);
-            sr.offsetMax = new Vector2(-10, -290);
+            sr.offsetMax = new Vector2(-10, -330);
 
             _built = true;
             Refresh();
