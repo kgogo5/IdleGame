@@ -18,7 +18,8 @@ namespace IdleGame.UI.Panels
         private const float DESC_F   = 26f;
 
         private Transform _listContent;
-        private TextMeshProUGUI _statSummaryText;
+        private TextMeshProUGUI _statLeft;
+        private TextMeshProUGUI _statRight;
         private bool _built;
 
         private void Start()
@@ -27,33 +28,53 @@ namespace IdleGame.UI.Panels
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(20, -100), offsetMax: new Vector2(0, -20));
 
-            // 최종 스탯 요약 박스 (타이틀 아래)
+            // 최종 스탯 요약 박스 — 2열 (업그레이드 패널과 동일 구조)
             var statBox = new GameObject("StatSummaryBox");
             statBox.transform.SetParent(transform, false);
             var sbRt = statBox.AddComponent<RectTransform>();
             sbRt.anchorMin = new Vector2(0, 1);
             sbRt.anchorMax = new Vector2(1, 1);
-            sbRt.offsetMin = new Vector2(10, -250);
+            sbRt.offsetMin = new Vector2(10, -285);
             sbRt.offsetMax = new Vector2(-10, -100);
             statBox.AddComponent<Image>().color = new Color(0.08f, 0.14f, 0.22f, 1f);
 
-            var stObj = new GameObject("StatText");
-            stObj.transform.SetParent(statBox.transform, false);
-            var stRt = stObj.AddComponent<RectTransform>();
-            stRt.anchorMin = Vector2.zero; stRt.anchorMax = Vector2.one;
-            stRt.offsetMin = new Vector2(14, 8); stRt.offsetMax = new Vector2(-14, -8);
-            _statSummaryText = stObj.AddComponent<TextMeshProUGUI>();
-            _statSummaryText.fontSize = 24;
-            _statSummaryText.color = new Color(0.85f, 0.92f, 1f);
-            _statSummaryText.richText = true;
-            _statSummaryText.raycastTarget = false;
+            // 타이틀
+            var titleObj = new GameObject("Title");
+            titleObj.transform.SetParent(statBox.transform, false);
+            var titleRt = titleObj.AddComponent<RectTransform>();
+            titleRt.anchorMin = new Vector2(0, 1); titleRt.anchorMax = new Vector2(1, 1);
+            titleRt.offsetMin = new Vector2(14, -36); titleRt.offsetMax = new Vector2(-14, -4);
+            var titleTmp = titleObj.AddComponent<TextMeshProUGUI>();
+            titleTmp.text = "[ 최종 스탯 ]";
+            titleTmp.fontSize = 24; titleTmp.color = new Color(0.67f, 0.8f, 1f);
+            titleTmp.richText = false; titleTmp.raycastTarget = false;
+
+            // 왼쪽 열
+            var leftObj = new GameObject("Left");
+            leftObj.transform.SetParent(statBox.transform, false);
+            var leftRt = leftObj.AddComponent<RectTransform>();
+            leftRt.anchorMin = new Vector2(0, 0); leftRt.anchorMax = new Vector2(0.5f, 1);
+            leftRt.offsetMin = new Vector2(14, 8); leftRt.offsetMax = new Vector2(-4, -40);
+            _statLeft = leftObj.AddComponent<TextMeshProUGUI>();
+            _statLeft.fontSize = 23; _statLeft.color = new Color(0.85f, 0.92f, 1f);
+            _statLeft.richText = true; _statLeft.raycastTarget = false;
+
+            // 오른쪽 열
+            var rightObj = new GameObject("Right");
+            rightObj.transform.SetParent(statBox.transform, false);
+            var rightRt = rightObj.AddComponent<RectTransform>();
+            rightRt.anchorMin = new Vector2(0.5f, 0); rightRt.anchorMax = new Vector2(1, 1);
+            rightRt.offsetMin = new Vector2(4, 8); rightRt.offsetMax = new Vector2(-14, -40);
+            _statRight = rightObj.AddComponent<TextMeshProUGUI>();
+            _statRight.fontSize = 23; _statRight.color = new Color(0.85f, 0.92f, 1f);
+            _statRight.richText = true; _statRight.raycastTarget = false;
 
             GameObject scrollObj = UIHelper.MakeScrollView(transform, out _listContent);
             RectTransform sr = scrollObj.GetComponent<RectTransform>();
             sr.anchorMin = Vector2.zero;
             sr.anchorMax = Vector2.one;
             sr.offsetMin = new Vector2(10, 10);
-            sr.offsetMax = new Vector2(-10, -255);
+            sr.offsetMax = new Vector2(-10, -290);
 
             _built = true;
             Refresh();
@@ -77,22 +98,26 @@ namespace IdleGame.UI.Panels
 
         private void RefreshStatSummary()
         {
-            if (_statSummaryText == null || PlayerStats.Instance == null) return;
+            if (_statLeft == null || _statRight == null || PlayerStats.Instance == null) return;
             var ps = PlayerStats.Instance;
 
+            string Val(string v) => $"<color=#FFF>{v}</color>";
             string Pct(double v) => v == 0
                 ? "<color=#555>0%</color>"
                 : v > 0 ? $"<color=#7EC8FF>+{v * 100:F0}%</color>"
                         : $"<color=#FF7070>{v * 100:F0}%</color>";
 
-            _statSummaryText.text =
-                "<color=#AACCFF>[ 최종 스탯 ]</color>\n" +
-                $"클릭 데미지   <color=#FFF>{NumberFormatter.Format(ps.ClickDamage)}</color>  <size=20>장비 {Pct(ps.EquipClickDamagePct)}</size>\n" +
-                $"자동공격      <color=#FFF>{NumberFormatter.Format(ps.AutoDamage)}</color>  <size=20>장비 {Pct(ps.EquipAutoDamagePct)}</size>\n" +
-                $"공격속도      <color=#FFF>{ps.AttackSpeed:F2}/s</color>  <size=20>장비 {Pct(ps.EquipAttackSpeedPct)}</size>\n" +
-                $"자동속도      <color=#FFF>{ps.AutoAttackSpeed:F2}/s</color>  <size=20>장비 {Pct(ps.EquipAutoAttackSpeedPct)}</size>\n" +
-                $"골드 배율     <color=#FFD700>x{ps.GoldMultiplier:F2}</color>  <size=20>장비 {Pct(ps.EquipGoldMultiplierPct)}</size>" +
-                (ps.EquipDropRatePct != 0 ? $"  드랍 {Pct(ps.EquipDropRatePct)}" : "");
+            _statLeft.text =
+                $"클릭 데미지\n{Val(NumberFormatter.Format(ps.ClickDamage))}  <size=20>{Pct(ps.EquipClickDamagePct)}</size>\n\n" +
+                $"자동공격\n{Val(NumberFormatter.Format(ps.AutoDamage))}  <size=20>{Pct(ps.EquipAutoDamagePct)}</size>\n\n" +
+                $"골드 배율\n<color=#FFD700>x{ps.GoldMultiplier:F2}</color>  <size=20>{Pct(ps.EquipGoldMultiplierPct)}</size>";
+
+            string dropLine = ps.EquipDropRatePct != 0
+                ? $"\n\n드랍률\n{Pct(ps.EquipDropRatePct)}" : "";
+            _statRight.text =
+                $"공격속도\n{Val($"{ps.AttackSpeed:F2}/s")}  <size=20>{Pct(ps.EquipAttackSpeedPct)}</size>\n\n" +
+                $"자동속도\n{Val($"{ps.AutoAttackSpeed:F2}/s")}  <size=20>{Pct(ps.EquipAutoAttackSpeedPct)}</size>" +
+                dropLine;
         }
 
         private void Refresh()
