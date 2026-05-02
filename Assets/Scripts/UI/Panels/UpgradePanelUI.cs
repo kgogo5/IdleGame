@@ -12,7 +12,8 @@ namespace IdleGame.UI.Panels
     public class UpgradePanelUI : MonoBehaviour
     {
         private Transform _listContent;
-        private TextMeshProUGUI _skillSummaryText;
+        private TextMeshProUGUI _summaryLeft;
+        private TextMeshProUGUI _summaryRight;
         private bool _built = false;
 
         private void Start()
@@ -49,51 +50,71 @@ namespace IdleGame.UI.Panels
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(20, -100), offsetMax: new Vector2(0, -20));
 
-            // 스킬 보너스 요약 박스 (타이틀 아래, 스크롤 위)
+            // 스킬 보너스 요약 박스 — 2열 레이아웃
             var summaryBox = new GameObject("SkillSummaryBox");
             summaryBox.transform.SetParent(transform, false);
             var boxRt = summaryBox.AddComponent<RectTransform>();
             boxRt.anchorMin = new Vector2(0, 1);
             boxRt.anchorMax = new Vector2(1, 1);
-            boxRt.offsetMin = new Vector2(10, -230);
+            boxRt.offsetMin = new Vector2(10, -285);
             boxRt.offsetMax = new Vector2(-10, -100);
-            var boxImg = summaryBox.AddComponent<UnityEngine.UI.Image>();
-            boxImg.color = new Color(0.08f, 0.14f, 0.22f, 1f);
+            summaryBox.AddComponent<UnityEngine.UI.Image>().color = new Color(0.08f, 0.14f, 0.22f, 1f);
 
-            var summaryTextObj = new GameObject("SummaryText");
-            summaryTextObj.transform.SetParent(summaryBox.transform, false);
-            var stRt = summaryTextObj.AddComponent<RectTransform>();
-            stRt.anchorMin = Vector2.zero; stRt.anchorMax = Vector2.one;
-            stRt.offsetMin = new Vector2(14, 8); stRt.offsetMax = new Vector2(-14, -8);
-            _skillSummaryText = summaryTextObj.AddComponent<TextMeshProUGUI>();
-            _skillSummaryText.fontSize = 24;
-            _skillSummaryText.color = new Color(0.8f, 0.95f, 0.8f);
-            _skillSummaryText.richText = true;
-            _skillSummaryText.raycastTarget = false;
+            // 타이틀
+            var titleObj = new GameObject("Title");
+            titleObj.transform.SetParent(summaryBox.transform, false);
+            var titleRt = titleObj.AddComponent<RectTransform>();
+            titleRt.anchorMin = new Vector2(0, 1); titleRt.anchorMax = new Vector2(1, 1);
+            titleRt.offsetMin = new Vector2(14, -36); titleRt.offsetMax = new Vector2(-14, -4);
+            var titleTmp = titleObj.AddComponent<TextMeshProUGUI>();
+            titleTmp.text = "[ 스킬 보너스 합계 ]";
+            titleTmp.fontSize = 24; titleTmp.color = new Color(0.67f, 0.8f, 1f);
+            titleTmp.richText = false; titleTmp.raycastTarget = false;
+
+            // 왼쪽 열
+            var leftObj = new GameObject("Left");
+            leftObj.transform.SetParent(summaryBox.transform, false);
+            var leftRt = leftObj.AddComponent<RectTransform>();
+            leftRt.anchorMin = new Vector2(0, 0); leftRt.anchorMax = new Vector2(0.5f, 1);
+            leftRt.offsetMin = new Vector2(14, 8); leftRt.offsetMax = new Vector2(-4, -40);
+            _summaryLeft = leftObj.AddComponent<TextMeshProUGUI>();
+            _summaryLeft.fontSize = 23; _summaryLeft.color = new Color(0.8f, 0.95f, 0.8f);
+            _summaryLeft.richText = true; _summaryLeft.raycastTarget = false;
+
+            // 오른쪽 열
+            var rightObj = new GameObject("Right");
+            rightObj.transform.SetParent(summaryBox.transform, false);
+            var rightRt = rightObj.AddComponent<RectTransform>();
+            rightRt.anchorMin = new Vector2(0.5f, 0); rightRt.anchorMax = new Vector2(1, 1);
+            rightRt.offsetMin = new Vector2(4, 8); rightRt.offsetMax = new Vector2(-14, -40);
+            _summaryRight = rightObj.AddComponent<TextMeshProUGUI>();
+            _summaryRight.fontSize = 23; _summaryRight.color = new Color(0.8f, 0.95f, 0.8f);
+            _summaryRight.richText = true; _summaryRight.raycastTarget = false;
 
             GameObject scrollObj = UIHelper.MakeScrollView(transform, out _listContent);
             RectTransform scrollRt = scrollObj.GetComponent<RectTransform>();
             scrollRt.anchorMin = Vector2.zero;
             scrollRt.anchorMax = Vector2.one;
             scrollRt.offsetMin = new Vector2(8, 8);
-            scrollRt.offsetMax = new Vector2(-8, -235);   // 요약 박스 높이만큼 위로
+            scrollRt.offsetMax = new Vector2(-8, -290);
         }
 
         private void RefreshSummary()
         {
-            if (_skillSummaryText == null || PlayerStats.Instance == null) return;
+            if (_summaryLeft == null || _summaryRight == null || PlayerStats.Instance == null) return;
             var ps = PlayerStats.Instance;
 
             string Fmt(double v, string unit = "") =>
-                v == 0 ? $"<color=#555>  0{unit}</color>" : $"<color=#7EFF7E>+{NumberFormatter.Format(v)}{unit}</color>";
+                v == 0 ? $"<color=#555>0{unit}</color>" : $"<color=#7EFF7E>+{NumberFormatter.Format(v)}{unit}</color>";
 
-            _skillSummaryText.text =
-                "<color=#AACCFF>[ 스킬 보너스 합계 ]</color>\n" +
-                $"클릭 데미지       {Fmt(ps.UpgradeClickDamage)}\n" +
-                $"자동공격 데미지  {Fmt(ps.UpgradeAutoDamage)}\n" +
-                $"공격속도          {Fmt(ps.UpgradeAttackSpeed, "/s")}\n" +
-                $"자동공격속도     {Fmt(ps.UpgradeAutoAttackSpeed, "/s")}\n" +
-                $"골드 배율          {Fmt(ps.UpgradeGoldMultiplier)}";
+            _summaryLeft.text =
+                $"클릭 데미지\n{Fmt(ps.UpgradeClickDamage)}\n\n" +
+                $"자동공격\n{Fmt(ps.UpgradeAutoDamage)}\n\n" +
+                $"골드 배율\n{Fmt(ps.UpgradeGoldMultiplier)}";
+
+            _summaryRight.text =
+                $"공격속도\n{Fmt(ps.UpgradeAttackSpeed, "/s")}\n\n" +
+                $"자동공격속도\n{Fmt(ps.UpgradeAutoAttackSpeed, "/s")}";
         }
 
         private void Refresh()
