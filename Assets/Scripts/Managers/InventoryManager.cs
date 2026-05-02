@@ -61,14 +61,14 @@ namespace IdleGame.Managers
             }
 
             // 소모품 — sell < 0이면 buy의 30% 자동 계산
-            ItemData Consumable(string id, string displayName, double buy, double sell = -1,
-                                params (StatType t, float p)[] mods)
+            ItemData Consumable(string id, string displayName, double buy, double sell,
+                                ItemRarity rarity, params (StatType t, float p)[] mods)
             {
                 var d = ScriptableObject.CreateInstance<ItemData>();
                 d.name = id; d.itemName = displayName;
                 d.buyPrice  = buy;
                 d.sellPrice = buy > 0 ? System.Math.Round(buy * 0.3) : (sell < 0 ? 0 : sell);
-                d.isStackable = true; d.rarity = ItemRarity.Normal;
+                d.isStackable = true; d.rarity = rarity;
                 d.modifiers = mods.Select(m => new StatModifier { statType = m.t, percent = m.p }).ToArray();
                 d.description = string.Join(", ", d.modifiers.Select(m => m.ToDisplayString()));
                 return d;
@@ -591,29 +591,31 @@ namespace IdleGame.Managers
             list.Add(레전4_목걸이);
 
             // ── 소모품 (드랍 전용 — 상점 미판매) ──
+            // Rare: 스택당 +4~6% (10개 쌓아도 +40~60%)
             list.Add(Consumable("소모_자동소", "자동 장치",
-                0, 500, (StatType.AutoDamage, 0.15f)));
+                0, 300, ItemRarity.Rare, (StatType.AutoDamage, 0.04f)));
 
             list.Add(Consumable("소모_자동대", "자동 포탑",
-                0, 2_000, (StatType.AutoDamage, 0.40f)));
+                0, 800, ItemRarity.Rare, (StatType.AutoDamage, 0.10f)));
 
             list.Add(Consumable("소모_골드", "황금 코인",
-                0, 300, (StatType.GoldMultiplier, 0.15f)));
+                0, 300, ItemRarity.Rare, (StatType.GoldMultiplier, 0.04f)));
 
             list.Add(Consumable("소모_클릭", "클릭 부적",
-                0, 800, (StatType.ClickDamage, 0.20f)));
+                0, 400, ItemRarity.Rare, (StatType.ClickDamage, 0.05f)));
 
             list.Add(Consumable("소모_공속", "신속의 룬",
-                0, 1_200, (StatType.AttackSpeed, 0.20f)));
+                0, 500, ItemRarity.Rare, (StatType.AttackSpeed, 0.05f)));
 
             list.Add(Consumable("소모_자동공속", "연사의 태엽",
-                0, 1_000, (StatType.AutoAttackSpeed, 0.25f)));
+                0, 500, ItemRarity.Rare, (StatType.AutoAttackSpeed, 0.06f)));
 
+            // Unique: 유틸리티 특화
             list.Add(Consumable("소모_드랍부적", "드랍 부적",
-                0, 1_500, (StatType.DropRate, 0.30f)));
+                0, 1_500, ItemRarity.Unique, (StatType.DropRate, 0.15f)));
 
             list.Add(Consumable("소모_보스소환서", "보스 소환서",
-                0, 2_500, (StatType.BossSpawnRate, 0.02f)));
+                0, 2_500, ItemRarity.Unique, (StatType.BossSpawnRate, 0.02f)));
 
             _shopItems = list.ToArray();
         }

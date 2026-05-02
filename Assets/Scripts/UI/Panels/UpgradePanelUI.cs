@@ -12,6 +12,7 @@ namespace IdleGame.UI.Panels
     public class UpgradePanelUI : MonoBehaviour
     {
         private Transform _listContent;
+        private TextMeshProUGUI _skillSummaryText;
         private bool _built = false;
 
         private void Start()
@@ -23,11 +24,13 @@ namespace IdleGame.UI.Panels
                 UpgradeManager.Instance.OnUpgradePurchased += Refresh;
             if (MonsterManager.Instance != null)
                 MonsterManager.Instance.OnStageChanged += _ => Refresh();
+            if (PlayerStats.Instance != null)
+                PlayerStats.Instance.OnStatsChanged += RefreshSummary;
         }
 
         private void OnEnable()
         {
-            if (_built) Refresh();
+            if (_built) { Refresh(); RefreshSummary(); }
         }
 
         private void OnDestroy()
@@ -36,6 +39,8 @@ namespace IdleGame.UI.Panels
                 UpgradeManager.Instance.OnUpgradePurchased -= Refresh;
             if (MonsterManager.Instance != null)
                 MonsterManager.Instance.OnStageChanged -= _ => Refresh();
+            if (PlayerStats.Instance != null)
+                PlayerStats.Instance.OnStatsChanged -= RefreshSummary;
         }
 
         private void BuildLayout()
@@ -44,16 +49,56 @@ namespace IdleGame.UI.Panels
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(20, -100), offsetMax: new Vector2(0, -20));
 
+            // 스킬 보너스 요약 박스 (타이틀 아래, 스크롤 위)
+            var summaryBox = new GameObject("SkillSummaryBox");
+            summaryBox.transform.SetParent(transform, false);
+            var boxRt = summaryBox.AddComponent<RectTransform>();
+            boxRt.anchorMin = new Vector2(0, 1);
+            boxRt.anchorMax = new Vector2(1, 1);
+            boxRt.offsetMin = new Vector2(10, -230);
+            boxRt.offsetMax = new Vector2(-10, -100);
+            var boxImg = summaryBox.AddComponent<UnityEngine.UI.Image>();
+            boxImg.color = new Color(0.08f, 0.14f, 0.22f, 1f);
+
+            var summaryTextObj = new GameObject("SummaryText");
+            summaryTextObj.transform.SetParent(summaryBox.transform, false);
+            var stRt = summaryTextObj.AddComponent<RectTransform>();
+            stRt.anchorMin = Vector2.zero; stRt.anchorMax = Vector2.one;
+            stRt.offsetMin = new Vector2(14, 8); stRt.offsetMax = new Vector2(-14, -8);
+            _skillSummaryText = summaryTextObj.AddComponent<TextMeshProUGUI>();
+            _skillSummaryText.fontSize = 24;
+            _skillSummaryText.color = new Color(0.8f, 0.95f, 0.8f);
+            _skillSummaryText.richText = true;
+            _skillSummaryText.raycastTarget = false;
+
             GameObject scrollObj = UIHelper.MakeScrollView(transform, out _listContent);
             RectTransform scrollRt = scrollObj.GetComponent<RectTransform>();
             scrollRt.anchorMin = Vector2.zero;
             scrollRt.anchorMax = Vector2.one;
             scrollRt.offsetMin = new Vector2(8, 8);
-            scrollRt.offsetMax = new Vector2(-8, -85);
+            scrollRt.offsetMax = new Vector2(-8, -235);   // 요약 박스 높이만큼 위로
+        }
+
+        private void RefreshSummary()
+        {
+            if (_skillSummaryText == null || PlayerStats.Instance == null) return;
+            var ps = PlayerStats.Instance;
+
+            string Fmt(double v, string unit = "") =>
+                v == 0 ? $"<color=#555>  0{unit}</color>" : $"<color=#7EFF7E>+{NumberFormatter.Format(v)}{unit}</color>";
+
+            _skillSummaryText.text =
+                "<color=#AACCFF>[ 스킬 보너스 합계 ]</color>\n" +
+                $"클릭 데미지       {Fmt(ps.UpgradeClickDamage)}\n" +
+                $"자동공격 데미지  {Fmt(ps.UpgradeAutoDamage)}\n" +
+                $"공격속도          {Fmt(ps.UpgradeAttackSpeed, "/s")}\n" +
+                $"자동공격속도     {Fmt(ps.UpgradeAutoAttackSpeed, "/s")}\n" +
+                $"골드 배율          {Fmt(ps.UpgradeGoldMultiplier)}";
         }
 
         private void Refresh()
         {
+            RefreshSummary();
             if (_listContent == null) return;
             if (UpgradeManager.Instance == null) return;
 

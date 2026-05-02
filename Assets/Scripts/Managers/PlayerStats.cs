@@ -52,6 +52,21 @@ namespace IdleGame.Managers
         // 전투력: 클릭DPS + 자동DPS
         public double CombatPower => ClickDamage * AttackSpeed + AutoDamage * AutoAttackSpeed;
 
+        // 업그레이드(스킬) 플랫 보너스 — 스킬 패널 상태창용
+        public double UpgradeClickDamage     => _clickDamageFlat;
+        public double UpgradeAttackSpeed     => _attackSpeedFlat;
+        public double UpgradeAutoDamage      => _autoDamageFlat;
+        public double UpgradeAutoAttackSpeed => _autoAttackSpeedFlat;
+        public double UpgradeGoldMultiplier  => _goldMultiplierFlat;
+
+        // 장비 % 보너스 합계 — 장비 패널 상태창용
+        public double EquipClickDamagePct     => _clickDamagePct;
+        public double EquipAttackSpeedPct     => _attackSpeedPct;
+        public double EquipAutoDamagePct      => _autoDamagePct;
+        public double EquipAutoAttackSpeedPct => _autoAttackSpeedPct;
+        public double EquipGoldMultiplierPct  => _goldMultiplierPct;
+        public double EquipDropRatePct        => _dropRatePct;
+
         public event Action OnStatsChanged;
 
         private float _lastClickTime = -999f;
