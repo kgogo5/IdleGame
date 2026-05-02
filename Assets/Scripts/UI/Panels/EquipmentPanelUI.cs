@@ -78,6 +78,7 @@ namespace IdleGame.UI.Panels
 
             _built = true;
             Refresh();
+            RefreshStatSummary();
             InventoryManager.Instance.OnInventoryChanged += Refresh;
             InventoryManager.Instance.OnEquipChanged     += Refresh;
             if (PlayerStats.Instance != null)
@@ -151,7 +152,7 @@ namespace IdleGame.UI.Panels
             // 소모품
             if (consumables.Count > 0)
             {
-                AddSectionHeader("- 소모품 -");
+                AddSectionHeader("- 부적 -");
                 foreach (var item in consumables) CreateConsumableRow(item);
             }
 
