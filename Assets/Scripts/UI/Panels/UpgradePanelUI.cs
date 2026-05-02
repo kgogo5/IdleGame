@@ -104,8 +104,10 @@ namespace IdleGame.UI.Panels
             if (_summaryLeft == null || _summaryRight == null || PlayerStats.Instance == null) return;
             var ps = PlayerStats.Instance;
 
-            string Fmt(double v, string unit = "") =>
-                v == 0 ? $"<color=#555>0{unit}</color>" : $"<color=#7EFF7E>+{NumberFormatter.Format(v)}{unit}</color>";
+            string Fmt(double v) =>
+                v == 0 ? "<color=#555>0</color>" : $"<color=#7EFF7E>+{NumberFormatter.Format(v)}</color>";
+            string FmtSpeed(double v) =>
+                v == 0 ? "<color=#555>0/s</color>" : $"<color=#7EFF7E>+{v:F2}/s</color>";
 
             _summaryLeft.text =
                 $"클릭 데미지\n{Fmt(ps.UpgradeClickDamage)}\n\n" +
@@ -113,8 +115,8 @@ namespace IdleGame.UI.Panels
                 $"골드 배율\n{Fmt(ps.UpgradeGoldMultiplier)}";
 
             _summaryRight.text =
-                $"공격속도\n{Fmt(ps.UpgradeAttackSpeed, "/s")}\n\n" +
-                $"자동공격속도\n{Fmt(ps.UpgradeAutoAttackSpeed, "/s")}";
+                $"공격속도\n{FmtSpeed(ps.UpgradeAttackSpeed)}\n\n" +
+                $"자동공격속도\n{FmtSpeed(ps.UpgradeAutoAttackSpeed)}";
         }
 
         private void Refresh()
