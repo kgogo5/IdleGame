@@ -32,10 +32,11 @@ namespace IdleGame.Managers
         private double _goldMultiplierPct;
         private double _dropRatePct;
         private double _bossSpawnRatePct;
+        private double _devMultiplier = 1.0;
 
         public double ClickDamage => Math.Max(0, (_baseClickDamage + _clickDamageFlat) * (1 + _clickDamagePct));
         public double AutoDamage  => Math.Max(0, (_baseAutoDamage  + _autoDamageFlat)  * (1 + _autoDamagePct));
-        public double GoldMultiplier  => (_baseGoldMultiplier  + _goldMultiplierFlat)  * (1 + _goldMultiplierPct);
+        public double GoldMultiplier  => (_baseGoldMultiplier  + _goldMultiplierFlat)  * (1 + _goldMultiplierPct) * _devMultiplier;
 
         // 공격속도: 최소/최대 클램프
         public double AttackSpeed     => Math.Clamp(
@@ -46,8 +47,9 @@ namespace IdleGame.Managers
         public float  ClickCooldown      => (float)(1.0 / AttackSpeed);
         public float  AutoAttackInterval => (float)(1.0 / AutoAttackSpeed);
 
-        public double DropRateMultiplier => 1.0 + _dropRatePct;
+        public double DropRateMultiplier => (1.0 + _dropRatePct) * _devMultiplier;
         public double BossSpawnRateBonus => _bossSpawnRatePct;
+        public double DevMultiplier      => _devMultiplier;
 
         // 전투력: 클릭DPS + 자동DPS
         public double CombatPower => ClickDamage * AttackSpeed + AutoDamage * AutoAttackSpeed;
@@ -121,6 +123,12 @@ namespace IdleGame.Managers
         {
             _clickDamagePct = _attackSpeedPct = _autoDamagePct = _autoAttackSpeedPct = _goldMultiplierPct = 0;
             _dropRatePct = _bossSpawnRatePct = 0;
+            OnStatsChanged?.Invoke();
+        }
+
+        public void SetDevMultiplier(double mul)
+        {
+            _devMultiplier = Math.Max(0.1, mul);
             OnStatsChanged?.Invoke();
         }
 

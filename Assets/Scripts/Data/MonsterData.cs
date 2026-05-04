@@ -32,10 +32,10 @@ namespace IdleGame.Data
         public float regenPerSecond = 0f;
 
         // 등급별 가중치 (0이면 해당 등급 제외)
-        public float normalWeight    = 75f;
-        public float rareWeight      = 25f;
-        public float uniqueWeight    =  0f;
-        public float legendaryWeight =  0f;
+        public float normalWeight    = 82f;
+        public float rareWeight      = 16f;
+        public float uniqueWeight    =  1.8f;
+        public float legendaryWeight =  0.2f;
 
         // 이 몬스터 전용 아이템 (등급 풀과 합산해 추첨)
         public DropEntry[] customDrops;

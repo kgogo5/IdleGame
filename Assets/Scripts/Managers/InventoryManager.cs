@@ -610,12 +610,16 @@ namespace IdleGame.Managers
             list.Add(Consumable("소모_자동공속", "연사의 태엽",
                 0, 500, ItemRarity.Rare, (StatType.AutoAttackSpeed, 0.06f)));
 
-            // Unique: 유틸리티 특화
-            list.Add(Consumable("소모_드랍부적", "드랍 부적",
-                0, 1_500, ItemRarity.Unique, (StatType.DropRate, 0.15f)));
+            // Unique: 부적 (장착 슬롯 — 장착 시에만 효과 적용)
+            list.Add(Equip("소모_드랍부적", "드랍 부적",
+                "+15% 드랍률",
+                0, 1_500, ItemRarity.Unique, EquipSlot.Talisman, "",
+                (StatType.DropRate, 0.15f)));
 
-            list.Add(Consumable("소모_보스소환서", "보스 소환서",
-                0, 2_500, ItemRarity.Unique, (StatType.BossSpawnRate, 0.02f)));
+            list.Add(Equip("소모_보스소환서", "보스 소환서",
+                "+2% 보스 등장률",
+                0, 2_500, ItemRarity.Unique, EquipSlot.Talisman, "",
+                (StatType.BossSpawnRate, 0.02f)));
 
             _shopItems = list.ToArray();
         }
@@ -973,6 +977,43 @@ namespace IdleGame.Managers
             Save();
             OnInventoryChanged?.Invoke();
             OnItemAcquired?.Invoke(item);
+        }
+
+        // 보스 전용 — 레어 이상 아이템 1개 무조건 지급
+        // 가중치로 등급 선택 → 해당 등급 미보유 없으면 인접 등급으로 폭포 → 전부 보유 시 레어+ 소모품
+        public void GiveBossGuaranteedDrop(float rareW, float uniqueW, float legendW)
+        {
+            int stage = Core.MonsterManager.Instance?.Stage ?? 1;
+            float total = rareW + uniqueW + legendW;
+            float roll  = UnityEngine.Random.value * total;
+
+            ItemRarity[] order;
+            if      (roll < rareW)           order = new[] { ItemRarity.Rare, ItemRarity.Unique, ItemRarity.Legendary };
+            else if (roll < rareW + uniqueW) order = new[] { ItemRarity.Unique, ItemRarity.Legendary, ItemRarity.Rare };
+            else                             order = new[] { ItemRarity.Legendary, ItemRarity.Unique, ItemRarity.Rare };
+
+            foreach (var rarity in order)
+            {
+                var pool = _shopItems
+                    .Where(i => i != null && !i.isStackable && i.rarity == rarity
+                             && !IsOwned(i) && i.minDropStage <= stage)
+                    .ToList();
+                if (pool.Count == 0) continue;
+
+                var chosen = pool[UnityEngine.Random.Range(0, pool.Count)];
+                _owned[chosen.name] = 1;
+                Save();
+                OnInventoryChanged?.Invoke();
+                OnItemAcquired?.Invoke(chosen);
+                return;
+            }
+
+            // 모든 장비 수집 완료 → 레어 이상 소모품으로 대체
+            var consumables = _shopItems
+                .Where(i => i != null && i.isStackable && (int)i.rarity >= (int)ItemRarity.Rare)
+                .ToList();
+            if (consumables.Count > 0)
+                GiveItem(consumables[UnityEngine.Random.Range(0, consumables.Count)].name);
         }
 
         // 특정 등급의 미보유 장비 중 랜덤 1개 지급

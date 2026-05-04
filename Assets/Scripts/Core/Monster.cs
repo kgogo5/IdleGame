@@ -131,6 +131,15 @@ namespace IdleGame.Core
         private void RollDrop()
         {
             if (_data == null || Managers.InventoryManager.Instance == null) return;
+
+            // 보스는 무조건 레어+ 아이템 1개 보장
+            if (_data.isBoss)
+            {
+                Managers.InventoryManager.Instance.GiveBossGuaranteedDrop(
+                    _data.rareWeight, _data.uniqueWeight, _data.legendaryWeight);
+                return;
+            }
+
             float effectiveDropChance = _data.dropChance * (float)(Managers.PlayerStats.Instance?.DropRateMultiplier ?? 1.0);
             if (UnityEngine.Random.value > effectiveDropChance) return;
 

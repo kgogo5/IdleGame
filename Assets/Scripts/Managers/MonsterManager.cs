@@ -25,8 +25,7 @@ namespace IdleGame.Core
         public double FleeCost => CurrencyManager.Instance != null
             ? System.Math.Max(1, CurrencyManager.Instance.Gold * 0.3)
             : 0;
-        public bool CanFlee() => CurrencyManager.Instance != null
-                              && CurrencyManager.Instance.Gold > 0;
+        public bool CanFlee() => CurrencyManager.Instance != null;
 
         public int Stage { get; private set; } = 1;
         public int MaxStageReached { get; private set; } = 1;
@@ -61,14 +60,9 @@ namespace IdleGame.Core
             _bossData.spriteSize  = new Vector2(2f, 2f);
             _bossData.dropChance  = 0.8f;               // 보스는 80% 드랍
             _bossData.normalWeight    = 0f;
-            _bossData.rareWeight      = 30f;
-            _bossData.uniqueWeight    = 40f;
-            _bossData.legendaryWeight = 15f;
-            _bossData.customDrops = new Data.DropEntry[]
-            {
-                new Data.DropEntry { itemId = "소모_드랍부적",   weight = 10f },
-                new Data.DropEntry { itemId = "소모_보스소환서", weight = 5f  },
-            };
+            _bossData.rareWeight      = 65f;
+            _bossData.uniqueWeight    = 25f;
+            _bossData.legendaryWeight = 10f;
         }
 
         // 현재 스테이지에 해당하는 StageConfig 반환 (없으면 null)
@@ -92,6 +86,7 @@ namespace IdleGame.Core
 
         private void Start()
         {
+            _forceNormal = true; // 게임 시작 첫 몬스터는 보스 불가
             ApplyStageEnvironment(Stage);
             SpawnMonster();
         }

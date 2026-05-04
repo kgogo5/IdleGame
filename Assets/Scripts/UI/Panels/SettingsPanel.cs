@@ -55,6 +55,9 @@ namespace IdleGame.UI.Panels
         private ItemRarity _selectedRarity = ItemRarity.Normal;
         private readonly Dictionary<ItemRarity, Image> _rarityImgs = new();
 
+        private TextMeshProUGUI _devMulLabel;
+        private TMP_InputField  _devMulInput;
+
         private void Start()
         {
             settingsButton.onClick.AddListener(OpenSettings);
@@ -527,36 +530,201 @@ namespace IdleGame.UI.Panels
             var page = new GameObject("_AdminPage");
             page.transform.SetParent(content, false);
             _adminPage = page;
-
-            var vlg = page.AddComponent<VerticalLayoutGroup>();
-            vlg.childForceExpandHeight = false; vlg.childControlHeight = true;
-            vlg.childForceExpandWidth  = true;  vlg.childControlWidth  = true;
-            vlg.childAlignment = TextAnchor.UpperCenter;
-            vlg.spacing = 8f; vlg.padding = new RectOffset(14, 14, 14, 14);
             page.AddComponent<LayoutElement>().flexibleHeight = 1f;
 
-            AddAdminLabel(page.transform, "재화");
-            AddTwoButtons(page.transform,
+            // ScrollRect — 내용이 많아져도 스크롤 가능
+            var scrollGo = new GameObject("_Scroll");
+            scrollGo.transform.SetParent(page.transform, false);
+            var scrollRt = scrollGo.AddComponent<RectTransform>();
+            scrollRt.anchorMin = Vector2.zero; scrollRt.anchorMax = Vector2.one;
+            scrollRt.offsetMin = scrollRt.offsetMax = Vector2.zero;
+            var scroll = scrollGo.AddComponent<ScrollRect>();
+            scroll.horizontal = false; scroll.scrollSensitivity = 40f;
+
+            var vpGo = new GameObject("Viewport");
+            vpGo.transform.SetParent(scrollGo.transform, false);
+            var vpRt = vpGo.AddComponent<RectTransform>();
+            vpRt.anchorMin = Vector2.zero; vpRt.anchorMax = Vector2.one;
+            vpRt.offsetMin = vpRt.offsetMax = Vector2.zero;
+            vpGo.AddComponent<RectMask2D>();
+            scroll.viewport = vpRt;
+
+            var cGo = new GameObject("Content");
+            cGo.transform.SetParent(vpGo.transform, false);
+            var cRt = cGo.AddComponent<RectTransform>();
+            cRt.anchorMin = new Vector2(0, 1); cRt.anchorMax = new Vector2(1, 1);
+            cRt.pivot = new Vector2(0.5f, 1f); cRt.offsetMin = cRt.offsetMax = Vector2.zero;
+            var cvlg = cGo.AddComponent<VerticalLayoutGroup>();
+            cvlg.childForceExpandHeight = false; cvlg.childControlHeight = true;
+            cvlg.childForceExpandWidth  = true;  cvlg.childControlWidth  = true;
+            cvlg.spacing = 8f; cvlg.padding = new RectOffset(14, 14, 14, 14);
+            var csf = cGo.AddComponent<ContentSizeFitter>();
+            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            scroll.content = cRt;
+
+            Transform sc = cGo.transform;
+
+            AddAdminLabel(sc, "재화");
+            AddTwoButtons(sc,
                 "골드 ×2",   new Color(0.20f, 0.50f, 0.18f), OnGoldDouble,
                 "보석 +100", new Color(0.28f, 0.18f, 0.58f), OnJewelAdd);
 
-            AddAdminDivider(page.transform);
+            AddAdminDivider(sc);
 
-            AddAdminLabel(page.transform, "아이템 지급 (등급 선택)");
-            AddRaritySelector(page.transform);
-            AddAdminButton(page.transform, "랜덤 아이템 지급", new Color(0.18f, 0.38f, 0.60f),
-                OnGiveRandomItem);
+            AddAdminLabel(sc, "아이템 지급 (등급 선택)");
+            AddRaritySelector(sc);
+            AddAdminButton(sc, "랜덤 아이템 지급", new Color(0.18f, 0.38f, 0.60f), OnGiveRandomItem);
 
-            AddAdminDivider(page.transform);
+            AddAdminDivider(sc);
 
-            AddAdminLabel(page.transform, "치트");
-            AddAdminButton(page.transform, "업그레이드 모두 최대", new Color(0.18f, 0.48f, 0.18f),
+            AddAdminLabel(sc, "치트");
+            AddAdminButton(sc, "업그레이드 모두 최대", new Color(0.18f, 0.48f, 0.18f),
                 () => UpgradeManager.Instance?.MaxAllUpgrades());
-            AddAdminButton(page.transform, "아이템 모두 지급", new Color(0.18f, 0.38f, 0.55f),
+            AddAdminButton(sc, "아이템 모두 지급", new Color(0.18f, 0.38f, 0.55f),
                 () => InventoryManager.Instance?.GiveAllItems());
 
-            var sp = new GameObject("_Sp"); sp.transform.SetParent(page.transform, false);
-            sp.AddComponent<LayoutElement>().flexibleHeight = 1f;
+            AddAdminDivider(sc);
+
+            AddDevMultiplierSection(sc);
+        }
+
+        // ── 테스트 배속 ──────────────────────────────────────────────────────────
+
+        private void AddDevMultiplierSection(Transform p)
+        {
+            AddAdminLabel(p, "테스트 배속 (골드 · 드랍률)");
+
+            var dispGo = new GameObject("DevMulDisp");
+            dispGo.transform.SetParent(p, false);
+            dispGo.AddComponent<LayoutElement>().preferredHeight = 34f;
+            _devMulLabel = dispGo.AddComponent<TextMeshProUGUI>();
+            _devMulLabel.text = "현재 배수: 1.0×";
+            _devMulLabel.fontSize = 22f;
+            _devMulLabel.color = new Color(0.5f, 0.95f, 0.5f);
+            _devMulLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            _devMulLabel.raycastTarget = false;
+
+            AddMulPresetRow(p, new (string, double)[] { ("1×", 1), ("1.5×", 1.5), ("2×", 2), ("3×", 3) });
+            AddMulPresetRow(p, new (string, double)[] { ("5×", 5), ("10×", 10), ("20×", 20), ("50×", 50) });
+            AddCustomMulRow(p);
+        }
+
+        private void AddMulPresetRow(Transform p, (string label, double val)[] presets)
+        {
+            var row = new GameObject("MulRow");
+            row.transform.SetParent(p, false);
+            row.AddComponent<LayoutElement>().preferredHeight = 58f;
+            var hlg = row.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 6f;
+            hlg.childForceExpandWidth = true; hlg.childForceExpandHeight = true;
+            hlg.childControlWidth = true;     hlg.childControlHeight = true;
+
+            foreach (var (label, val) in presets)
+            {
+                var v = val;
+                Color c = val <= 1  ? new Color(0.25f, 0.28f, 0.35f)
+                        : val <= 2  ? new Color(0.15f, 0.45f, 0.20f)
+                        : val <= 5  ? new Color(0.50f, 0.32f, 0.08f)
+                        :             new Color(0.55f, 0.12f, 0.12f);
+                AddInlineBtn(row.transform, label, c, () => ApplyDevMul(v));
+            }
+        }
+
+        private void AddCustomMulRow(Transform p)
+        {
+            var row = new GameObject("CustomMulRow");
+            row.transform.SetParent(p, false);
+            row.AddComponent<LayoutElement>().preferredHeight = 58f;
+            var hlg = row.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 8f;
+            hlg.childForceExpandHeight = true; hlg.childControlHeight = true;
+
+            var iwGo = new GameObject("InputWrap");
+            iwGo.transform.SetParent(row.transform, false);
+            iwGo.AddComponent<RectTransform>();
+            iwGo.AddComponent<LayoutElement>().flexibleWidth = 1f;
+            _devMulInput = BuildTMPInputField(iwGo.transform, "배수 직접 입력 (예: 7.5)");
+            var inRt = _devMulInput.GetComponent<RectTransform>();
+            inRt.anchorMin = Vector2.zero; inRt.anchorMax = Vector2.one;
+            inRt.offsetMin = inRt.offsetMax = Vector2.zero;
+
+            var abGo = new GameObject("ApplyWrap");
+            abGo.transform.SetParent(row.transform, false);
+            abGo.AddComponent<RectTransform>();
+            var abLe = abGo.AddComponent<LayoutElement>();
+            abLe.preferredWidth = 100f; abLe.flexibleWidth = 0f;
+
+            var btnGo = new GameObject("ApplyBtn");
+            btnGo.transform.SetParent(abGo.transform, false);
+            var btnRt = btnGo.AddComponent<RectTransform>();
+            btnRt.anchorMin = Vector2.zero; btnRt.anchorMax = Vector2.one;
+            btnRt.offsetMin = btnRt.offsetMax = Vector2.zero;
+            var btnBg = btnGo.AddComponent<Image>(); btnBg.color = new Color(0.18f, 0.45f, 0.68f);
+            var btn = btnGo.AddComponent<Button>(); btn.targetGraphic = btnBg;
+            btn.onClick.AddListener(() =>
+            {
+                if (_devMulInput != null &&
+                    double.TryParse(_devMulInput.text,
+                        System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out double v))
+                    ApplyDevMul(Math.Max(0.1, v));
+            });
+
+            var tGo = new GameObject("L"); tGo.transform.SetParent(btnGo.transform, false);
+            var tRt = tGo.AddComponent<RectTransform>();
+            tRt.anchorMin = Vector2.zero; tRt.anchorMax = Vector2.one;
+            tRt.offsetMin = tRt.offsetMax = Vector2.zero;
+            var tmp = tGo.AddComponent<TextMeshProUGUI>();
+            tmp.text = "적용"; tmp.fontSize = 22f; tmp.fontStyle = FontStyles.Bold;
+            tmp.color = Color.white; tmp.alignment = TextAlignmentOptions.Center;
+            tmp.raycastTarget = false;
+        }
+
+        private void ApplyDevMul(double mul)
+        {
+            PlayerStats.Instance?.SetDevMultiplier(mul);
+            if (_devMulLabel != null)
+                _devMulLabel.text = $"현재 배수: {mul:F1}×";
+        }
+
+        private static TMP_InputField BuildTMPInputField(Transform parent, string placeholder)
+        {
+            var go = new GameObject("_InputField");
+            go.transform.SetParent(parent, false);
+            go.AddComponent<Image>().color = new Color(0.12f, 0.15f, 0.22f);
+
+            var textArea = new GameObject("Text Area");
+            textArea.transform.SetParent(go.transform, false);
+            var taRt = textArea.AddComponent<RectTransform>();
+            taRt.anchorMin = Vector2.zero; taRt.anchorMax = Vector2.one;
+            taRt.offsetMin = new Vector2(8, 4); taRt.offsetMax = new Vector2(-8, -4);
+            textArea.AddComponent<RectMask2D>();
+
+            var phGo = new GameObject("Placeholder"); phGo.transform.SetParent(textArea.transform, false);
+            var phRt = phGo.AddComponent<RectTransform>();
+            phRt.anchorMin = Vector2.zero; phRt.anchorMax = Vector2.one;
+            phRt.offsetMin = phRt.offsetMax = Vector2.zero;
+            var phTmp = phGo.AddComponent<TextMeshProUGUI>();
+            phTmp.text = placeholder; phTmp.fontSize = 18f;
+            phTmp.color = new Color(0.5f, 0.5f, 0.6f, 0.8f);
+            phTmp.alignment = TextAlignmentOptions.MidlineLeft; phTmp.raycastTarget = false;
+
+            var txtGo = new GameObject("Text"); txtGo.transform.SetParent(textArea.transform, false);
+            var txtRt = txtGo.AddComponent<RectTransform>();
+            txtRt.anchorMin = Vector2.zero; txtRt.anchorMax = Vector2.one;
+            txtRt.offsetMin = txtRt.offsetMax = Vector2.zero;
+            var txtTmp = txtGo.AddComponent<TextMeshProUGUI>();
+            txtTmp.fontSize = 22f; txtTmp.color = Color.white;
+            txtTmp.alignment = TextAlignmentOptions.MidlineLeft;
+            txtTmp.enableWordWrapping = false; txtTmp.raycastTarget = false;
+
+            var input = go.AddComponent<TMP_InputField>();
+            input.textViewport = taRt;
+            input.textComponent = txtTmp;
+            input.placeholder = phTmp;
+            input.contentType = TMP_InputField.ContentType.DecimalNumber;
+            input.characterLimit = 8;
+            return input;
         }
 
         private void OnGoldDouble()

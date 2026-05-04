@@ -144,31 +144,42 @@ namespace IdleGame.UI.Panels
             if (_listContent == null || InventoryManager.Instance == null) return;
             foreach (Transform child in _listContent) Destroy(child.gameObject);
 
-            var equips = new List<ItemData>();
+            var equips     = new List<ItemData>();
+            var talismans  = new List<ItemData>();
             var consumables = new List<ItemData>();
             foreach (var item in InventoryManager.Instance.ShopItems)
             {
                 if (item == null || !InventoryManager.Instance.IsOwned(item)) continue;
-                if (item.isStackable) consumables.Add(item);
-                else equips.Add(item);
+                if (item.isStackable)                consumables.Add(item);
+                else if (item.slot == EquipSlot.Talisman) talismans.Add(item);
+                else                                 equips.Add(item);
             }
 
-            equips.Sort((a, b) =>
+            System.Comparison<ItemData> equipSort = (a, b) =>
             {
                 bool aEq = InventoryManager.Instance.IsEquipped(a);
                 bool bEq = InventoryManager.Instance.IsEquipped(b);
                 if (aEq != bEq) return bEq.CompareTo(aEq);
                 return ((int)b.rarity).CompareTo((int)a.rarity);
-            });
+            };
+
+            equips.Sort(equipSort);
 
             if (equips.Count == 0)
                 AddEmptyLabel("보유 장비 없음");
             else
                 foreach (var item in equips) CreateItemRow(item);
 
-            if (consumables.Count > 0)
+            if (talismans.Count > 0)
             {
                 AddSectionHeader("- 부적 -");
+                talismans.Sort(equipSort);
+                foreach (var item in talismans) CreateTalismanRow(item);
+            }
+
+            if (consumables.Count > 0)
+            {
+                AddSectionHeader("- 소모품 -");
                 foreach (var item in consumables) CreateConsumableRow(item);
             }
 
@@ -203,6 +214,31 @@ namespace IdleGame.UI.Panels
             string setName = GetSetName(item);
             string setTag  = setName != null ? $"  <size=22><color={UITheme.HexGold}>[{setName}]</color></size>" : "";
             string nameText = $"<color=#888888>[{item.slot.ToKorean()}]</color> <color=#{hex}>[{item.rarity.ToKorean()}]</color> {item.itemName}{setTag}";
+
+            RowLabel(row.transform, nameText, NAME_F, Color.white,
+                anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
+                offsetMin: new Vector2(14, -74), offsetMax: new Vector2(-(BTN_W + 18), -4),
+                richText: true);
+
+            RowLabel(row.transform, GetModsText(item), DESC_F, UITheme.TxtMod,
+                anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
+                offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-(BTN_W + 18), -80));
+
+            string btnLabel = equipped ? "해제" : "장착";
+            Color  btnColor = equipped ? UITheme.BtnUnequip : UITheme.BtnEquip;
+            System.Action onClick = equipped
+                ? () => InventoryManager.Instance.Unequip(item)
+                : () => InventoryManager.Instance.Equip(item);
+            MakeBtn(row.transform, btnLabel, btnColor, BTN_W, BTN_H, 30f, onClick);
+        }
+
+        private void CreateTalismanRow(ItemData item)
+        {
+            bool equipped = InventoryManager.Instance.IsEquipped(item);
+            var row = MakeRow(equipped ? new Color(0.18f, 0.25f, 0.32f) : new Color(0.10f, 0.14f, 0.20f), ROW_H);
+
+            string hex = ColorUtility.ToHtmlStringRGB(item.rarity.ToColor());
+            string nameText = $"<color=#{hex}>[{item.rarity.ToKorean()}]</color> {item.itemName}";
 
             RowLabel(row.transform, nameText, NAME_F, Color.white,
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),

@@ -66,8 +66,8 @@ namespace IdleGame.UI
             rt.anchorMin        = new Vector2(1, 1);
             rt.anchorMax        = new Vector2(1, 1);
             rt.pivot            = new Vector2(1, 1);
-            rt.anchoredPosition = new Vector2(-10, -145);
-            rt.sizeDelta        = new Vector2(150, 65);
+            rt.anchoredPosition = new Vector2(-10, -150);
+            rt.sizeDelta        = new Vector2(200, 90);
 
             Image bg = btn.AddComponent<Image>();
             bg.color = new Color(0.6f, 0.15f, 0.15f);
@@ -87,7 +87,7 @@ namespace IdleGame.UI
 
             _fleeLabel = labelObj.AddComponent<TextMeshProUGUI>();
             _fleeLabel.alignment  = TextAlignmentOptions.Center;
-            _fleeLabel.fontSize   = 24;
+            _fleeLabel.fontSize   = 28;
             _fleeLabel.color      = Color.white;
             _fleeLabel.raycastTarget = false;
         }
