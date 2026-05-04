@@ -10,16 +10,15 @@ namespace IdleGame.UI.Panels
 {
     public class EquipmentPanelUI : MonoBehaviour
     {
-        private const int ROW_H      = 160;
-        private const int SET_ROW_H  = 130;
-        private const int BTN_W      = 150;
-        private const int BTN_H      = 110;
-        private const float NAME_F   = 32f;
-        private const float DESC_F   = 26f;
+        private const int   ROW_H     = 160;
+        private const int   SET_ROW_H = 130;
+        private const int   BTN_W     = 150;
+        private const int   BTN_H     = 110;
+        private const float NAME_F    = 32f;
+        private const float DESC_F    = 26f;
 
         private Transform _listContent;
-        private TextMeshProUGUI _statLeft;
-        private TextMeshProUGUI _statRight;
+        private TextMeshProUGUI _statC1, _statC2, _statC3;
         private bool _built;
 
         private void Start()
@@ -28,53 +27,62 @@ namespace IdleGame.UI.Panels
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(20, -100), offsetMax: new Vector2(0, -20));
 
-            // 최종 스탯 요약 박스 — 2열 (업그레이드 패널과 동일 구조)
+            // body: 타이틀 아래 ~ 하단 채움
+            var body = new GameObject("Body");
+            body.transform.SetParent(transform, false);
+            var bodyRt = body.AddComponent<RectTransform>();
+            bodyRt.anchorMin = Vector2.zero;
+            bodyRt.anchorMax = Vector2.one;
+            bodyRt.offsetMin = new Vector2(8, 8);
+            bodyRt.offsetMax = new Vector2(-8, -90);
+            var bodyVlg = body.AddComponent<VerticalLayoutGroup>();
+            bodyVlg.spacing = 8;
+            bodyVlg.childControlWidth = true;
+            bodyVlg.childControlHeight = true;
+            bodyVlg.childForceExpandWidth = true;
+            bodyVlg.childForceExpandHeight = false;
+
+            // 최종 스탯 박스
             var statBox = new GameObject("StatSummaryBox");
-            statBox.transform.SetParent(transform, false);
-            var sbRt = statBox.AddComponent<RectTransform>();
-            sbRt.anchorMin = new Vector2(0, 1);
-            sbRt.anchorMax = new Vector2(1, 1);
-            sbRt.offsetMin = new Vector2(10, -325);
-            sbRt.offsetMax = new Vector2(-10, -100);
-            statBox.AddComponent<Image>().color = new Color(0.08f, 0.14f, 0.22f, 1f);
+            statBox.transform.SetParent(body.transform, false);
+            statBox.AddComponent<Image>().color = UITheme.BgStatBox;
+            var statVlg = statBox.AddComponent<VerticalLayoutGroup>();
+            statVlg.padding = new RectOffset(0, 0, 10, 16);
+            statVlg.spacing = 6;
+            statVlg.childControlWidth = true;
+            statVlg.childControlHeight = true;
+            statVlg.childForceExpandWidth = true;
+            statVlg.childForceExpandHeight = false;
 
-            // 타이틀
-            var titleObj = new GameObject("Title");
-            titleObj.transform.SetParent(statBox.transform, false);
-            var titleRt = titleObj.AddComponent<RectTransform>();
-            titleRt.anchorMin = new Vector2(0, 1); titleRt.anchorMax = new Vector2(1, 1);
-            titleRt.offsetMin = new Vector2(14, -36); titleRt.offsetMax = new Vector2(-14, -4);
-            var titleTmp = titleObj.AddComponent<TextMeshProUGUI>();
+            var titleGo = new GameObject("Title");
+            titleGo.transform.SetParent(statBox.transform, false);
+            titleGo.AddComponent<LayoutElement>().preferredHeight = 36;
+            var titleTmp = titleGo.AddComponent<TextMeshProUGUI>();
             titleTmp.text = "[ 최종 스탯 ]";
-            titleTmp.fontSize = 24; titleTmp.color = new Color(0.67f, 0.8f, 1f);
-            titleTmp.richText = false; titleTmp.raycastTarget = false;
+            titleTmp.fontSize = 24;
+            titleTmp.color = UITheme.TxtHeading;
+            titleTmp.alignment = TextAlignmentOptions.Center;
+            titleTmp.richText = false;
+            titleTmp.raycastTarget = false;
 
-            // 왼쪽 열
-            var leftObj = new GameObject("Left");
-            leftObj.transform.SetParent(statBox.transform, false);
-            var leftRt = leftObj.AddComponent<RectTransform>();
-            leftRt.anchorMin = new Vector2(0, 0); leftRt.anchorMax = new Vector2(0.5f, 1);
-            leftRt.offsetMin = new Vector2(14, 8); leftRt.offsetMax = new Vector2(-4, -40);
-            _statLeft = leftObj.AddComponent<TextMeshProUGUI>();
-            _statLeft.fontSize = 23; _statLeft.color = new Color(0.85f, 0.92f, 1f);
-            _statLeft.richText = true; _statLeft.raycastTarget = false;
+            var colsRow = new GameObject("Cols");
+            colsRow.transform.SetParent(statBox.transform, false);
+            var colsHlg = colsRow.AddComponent<HorizontalLayoutGroup>();
+            colsHlg.padding = new RectOffset(14, 14, 4, 0);
+            colsHlg.spacing = 8;
+            colsHlg.childControlWidth = true;
+            colsHlg.childControlHeight = true;
+            colsHlg.childForceExpandWidth = true;
+            colsHlg.childForceExpandHeight = false;
 
-            // 오른쪽 열
-            var rightObj = new GameObject("Right");
-            rightObj.transform.SetParent(statBox.transform, false);
-            var rightRt = rightObj.AddComponent<RectTransform>();
-            rightRt.anchorMin = new Vector2(0.5f, 0); rightRt.anchorMax = new Vector2(1, 1);
-            rightRt.offsetMin = new Vector2(4, 8); rightRt.offsetMax = new Vector2(-14, -40);
-            _statRight = rightObj.AddComponent<TextMeshProUGUI>();
-            _statRight.fontSize = 23; _statRight.color = new Color(0.85f, 0.92f, 1f);
-            _statRight.richText = true; _statRight.raycastTarget = false;
+            _statC1 = MakeColTmp(colsRow.transform);
+            _statC2 = MakeColTmp(colsRow.transform);
+            _statC3 = MakeColTmp(colsRow.transform);
 
-            GameObject scrollObj = UIHelper.MakeScrollView(transform, out _listContent);
-            RectTransform sr = scrollObj.GetComponent<RectTransform>();
-            sr.anchorMin = Vector2.zero;
-            sr.anchorMax = Vector2.one;
-            sr.offsetMin = new Vector2(10, 10);
-            sr.offsetMax = new Vector2(-10, -330);
+            var scrollGo = UIHelper.MakeScrollView(body.transform, out _listContent);
+            var scrollLe = scrollGo.AddComponent<LayoutElement>();
+            scrollLe.minHeight = 100;
+            scrollLe.flexibleHeight = 1;
 
             _built = true;
             Refresh();
@@ -97,28 +105,38 @@ namespace IdleGame.UI.Panels
                 PlayerStats.Instance.OnStatsChanged -= RefreshStatSummary;
         }
 
+        private static TextMeshProUGUI MakeColTmp(Transform parent)
+        {
+            var go = new GameObject("Col");
+            go.transform.SetParent(parent, false);
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.fontSize = 24;
+            tmp.color = UITheme.TxtStatEquip;
+            tmp.richText = true;
+            tmp.raycastTarget = false;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
+            tmp.overflowMode = TextOverflowModes.Overflow;
+            return tmp;
+        }
+
         private void RefreshStatSummary()
         {
-            if (_statLeft == null || _statRight == null || PlayerStats.Instance == null) return;
+            if (_statC1 == null || PlayerStats.Instance == null) return;
             var ps = PlayerStats.Instance;
 
-            string Val(string v) => $"<color=#FFF>{v}</color>";
-            string Pct(double v) => v == 0
-                ? "<color=#555>0%</color>"
-                : v > 0 ? $"<color=#7EC8FF>+{v * 100:F0}%</color>"
-                        : $"<color=#FF7070>{v * 100:F0}%</color>";
+            _statC1.text =
+                $"클릭 데미지\n{UITheme.StatVal(NumberFormatter.Format(ps.ClickDamage))} <size=18>{UITheme.EquipPct(ps.EquipClickDamagePct)}</size>\n\n" +
+                $"자동공격\n{UITheme.StatVal(NumberFormatter.Format(ps.AutoDamage))} <size=18>{UITheme.EquipPct(ps.EquipAutoDamagePct)}</size>";
 
-            _statLeft.text =
-                $"클릭 데미지\n{Val(NumberFormatter.Format(ps.ClickDamage))}  <size=20>{Pct(ps.EquipClickDamagePct)}</size>\n\n" +
-                $"자동공격\n{Val(NumberFormatter.Format(ps.AutoDamage))}  <size=20>{Pct(ps.EquipAutoDamagePct)}</size>\n\n" +
-                $"골드 배율\n<color=#FFD700>x{ps.GoldMultiplier:F2}</color>  <size=20>{Pct(ps.EquipGoldMultiplierPct)}</size>";
+            _statC2.text =
+                $"공격속도\n{UITheme.StatVal($"{ps.AttackSpeed:F2}/s")} <size=18>{UITheme.EquipPct(ps.EquipAttackSpeedPct)}</size>\n\n" +
+                $"자동속도\n{UITheme.StatVal($"{ps.AutoAttackSpeed:F2}/s")} <size=18>{UITheme.EquipPct(ps.EquipAutoAttackSpeedPct)}</size>";
 
-            string dropLine = ps.EquipDropRatePct != 0
-                ? $"\n\n드랍률\n{Pct(ps.EquipDropRatePct)}" : "";
-            _statRight.text =
-                $"공격속도\n{Val($"{ps.AttackSpeed:F2}/s")}  <size=20>{Pct(ps.EquipAttackSpeedPct)}</size>\n\n" +
-                $"자동속도\n{Val($"{ps.AutoAttackSpeed:F2}/s")}  <size=20>{Pct(ps.EquipAutoAttackSpeedPct)}</size>" +
-                dropLine;
+            string dropText = ps.EquipDropRatePct != 0
+                ? $"\n\n드랍률\n{UITheme.EquipPct(ps.EquipDropRatePct)}" : "";
+            _statC3.text =
+                $"골드 배율\n{UITheme.StatGold($"x{ps.GoldMultiplier:F2}")} <size=18>{UITheme.EquipPct(ps.EquipGoldMultiplierPct)}</size>" +
+                dropText;
         }
 
         private void Refresh()
@@ -126,7 +144,6 @@ namespace IdleGame.UI.Panels
             if (_listContent == null || InventoryManager.Instance == null) return;
             foreach (Transform child in _listContent) Destroy(child.gameObject);
 
-            // 장비 (비스택)
             var equips = new List<ItemData>();
             var consumables = new List<ItemData>();
             foreach (var item in InventoryManager.Instance.ShopItems)
@@ -149,7 +166,6 @@ namespace IdleGame.UI.Panels
             else
                 foreach (var item in equips) CreateItemRow(item);
 
-            // 소모품
             if (consumables.Count > 0)
             {
                 AddSectionHeader("- 부적 -");
@@ -163,11 +179,7 @@ namespace IdleGame.UI.Panels
                 {
                     int count = CountEquipped(setData);
                     if (count == 0) continue;
-                    if (!hasSet)
-                    {
-                        hasSet = true;
-                        AddSectionHeader("- 세트 보너스 -");
-                    }
+                    if (!hasSet) { hasSet = true; AddSectionHeader("- 세트 보너스 -"); }
                     CreateSetBonusRow(setData, count);
                 }
             }
@@ -185,13 +197,11 @@ namespace IdleGame.UI.Panels
         private void CreateItemRow(ItemData item)
         {
             bool equipped = InventoryManager.Instance.IsEquipped(item);
-            Color bgColor = equipped ? new Color(0.10f, 0.22f, 0.14f) : new Color(0.13f, 0.13f, 0.18f);
+            var row = MakeRow(equipped ? UITheme.BgRowEquipped : UITheme.BgRowDefault, ROW_H);
 
-            GameObject row = MakeRow(bgColor, ROW_H);
-
-            string hex = ColorUtility.ToHtmlStringRGB(item.rarity.ToColor());
+            string hex     = ColorUtility.ToHtmlStringRGB(item.rarity.ToColor());
             string setName = GetSetName(item);
-            string setTag = setName != null ? $"  <size=22><color=#FFCC44>[{setName}]</color></size>" : "";
+            string setTag  = setName != null ? $"  <size=22><color={UITheme.HexGold}>[{setName}]</color></size>" : "";
             string nameText = $"<color=#888888>[{item.slot.ToKorean()}]</color> <color=#{hex}>[{item.rarity.ToKorean()}]</color> {item.itemName}{setTag}";
 
             RowLabel(row.transform, nameText, NAME_F, Color.white,
@@ -199,12 +209,12 @@ namespace IdleGame.UI.Panels
                 offsetMin: new Vector2(14, -74), offsetMax: new Vector2(-(BTN_W + 18), -4),
                 richText: true);
 
-            RowLabel(row.transform, GetModsText(item), DESC_F, new Color(0.70f, 0.85f, 0.70f),
+            RowLabel(row.transform, GetModsText(item), DESC_F, UITheme.TxtMod,
                 anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-(BTN_W + 18), -80));
 
-            Color btnColor = equipped ? new Color(0.55f, 0.15f, 0.15f) : new Color(0.15f, 0.45f, 0.25f);
             string btnLabel = equipped ? "해제" : "장착";
+            Color  btnColor = equipped ? UITheme.BtnUnequip : UITheme.BtnEquip;
             System.Action onClick = equipped
                 ? () => InventoryManager.Instance.Unequip(item)
                 : () => InventoryManager.Instance.Equip(item);
@@ -214,13 +224,13 @@ namespace IdleGame.UI.Panels
         private void CreateConsumableRow(ItemData item)
         {
             int count = InventoryManager.Instance.GetCount(item);
-            GameObject row = MakeRow(new Color(0.13f, 0.13f, 0.18f), ROW_H);
+            var row = MakeRow(UITheme.BgRowDefault, ROW_H);
 
             RowLabel(row.transform, $"{item.itemName}  x{count}", NAME_F, new Color(0.85f, 0.85f, 0.85f),
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, -74), offsetMax: new Vector2(-14, -4));
 
-            RowLabel(row.transform, GetModsText(item), DESC_F, new Color(0.70f, 0.85f, 0.70f),
+            RowLabel(row.transform, GetModsText(item), DESC_F, UITheme.TxtMod,
                 anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-14, -80));
         }
@@ -228,15 +238,15 @@ namespace IdleGame.UI.Panels
         private void CreateSetBonusRow(SetBonusData setData, int equippedCount)
         {
             var step = setData.GetActiveStep(equippedCount);
-            GameObject row = MakeRow(new Color(0.18f, 0.14f, 0.06f), SET_ROW_H);
+            var row  = MakeRow(UITheme.BgRowSetBonus, SET_ROW_H);
 
             RowLabel(row.transform,
                 $"{setData.setName}  ({equippedCount}/{setData.itemNames.Length})",
-                NAME_F, new Color(1f, 0.85f, 0.3f),
+                NAME_F, UITheme.TxtSetName,
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, -66), offsetMax: new Vector2(-14, -4));
 
-            RowLabel(row.transform, step?.description ?? "", DESC_F, new Color(0.95f, 0.8f, 0.4f),
+            RowLabel(row.transform, step?.description ?? "", DESC_F, UITheme.TxtSetDesc,
                 anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-14, -70));
         }
@@ -267,7 +277,7 @@ namespace IdleGame.UI.Panels
             var go = UIHelper.MakeText(_listContent, text, 28, TextAnchor.MiddleCenter,
                 anchorMin: Vector2.zero, anchorMax: Vector2.one,
                 offsetMin: Vector2.zero, offsetMax: Vector2.zero,
-                color: new Color(0.5f, 0.6f, 0.7f));
+                color: UITheme.TxtSubtle);
             go.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 65);
         }
 
@@ -276,13 +286,13 @@ namespace IdleGame.UI.Panels
             var go = UIHelper.MakeText(_listContent, text, 28, TextAnchor.MiddleCenter,
                 anchorMin: Vector2.zero, anchorMax: Vector2.one,
                 offsetMin: Vector2.zero, offsetMax: Vector2.zero,
-                color: new Color(0.4f, 0.4f, 0.4f));
+                color: UITheme.TxtEmpty);
             go.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 65);
         }
 
         private GameObject MakeRow(Color bgColor, int height)
         {
-            GameObject row = new GameObject("Row");
+            var row = new GameObject("Row");
             row.transform.SetParent(_listContent, false);
             row.AddComponent<RectTransform>().sizeDelta = new Vector2(0, height);
             row.AddComponent<Image>().color = bgColor;
@@ -293,20 +303,18 @@ namespace IdleGame.UI.Panels
             Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax,
             bool richText = false, bool wrap = false)
         {
-            GameObject go = new GameObject("Label");
+            var go = new GameObject("Label");
             go.transform.SetParent(parent, false);
-            RectTransform rt = go.AddComponent<RectTransform>();
-            rt.anchorMin = anchorMin;
-            rt.anchorMax = anchorMax;
-            rt.offsetMin = offsetMin;
-            rt.offsetMax = offsetMax;
-            TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchorMin = anchorMin; rt.anchorMax = anchorMax;
+            rt.offsetMin = offsetMin; rt.offsetMax = offsetMax;
+            var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text             = text;
             tmp.fontSize         = fontSize;
             tmp.color            = color;
             tmp.richText         = richText;
             tmp.alignment        = TextAlignmentOptions.MidlineLeft;
-            tmp.textWrappingMode = wrap ? TMPro.TextWrappingModes.Normal : TMPro.TextWrappingModes.NoWrap;
+            tmp.textWrappingMode = wrap ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
             tmp.overflowMode     = TextOverflowModes.Ellipsis;
             tmp.raycastTarget    = false;
         }
@@ -314,23 +322,22 @@ namespace IdleGame.UI.Panels
         private static void MakeBtn(Transform parent, string label, Color color,
             float width, float height, float fontSize, System.Action onClick)
         {
-            GameObject go = new GameObject("Btn");
+            var go = new GameObject("Btn");
             go.transform.SetParent(parent, false);
-            RectTransform rt = go.AddComponent<RectTransform>();
-            rt.anchorMin = new Vector2(1, 0.5f);
-            rt.anchorMax = new Vector2(1, 0.5f);
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1, 0.5f); rt.anchorMax = new Vector2(1, 0.5f);
             rt.pivot     = new Vector2(1, 0.5f);
             rt.anchoredPosition = new Vector2(-10, 0);
             rt.sizeDelta = new Vector2(width, height);
             go.AddComponent<Image>().color = color;
             go.AddComponent<Button>().onClick.AddListener(() => onClick());
 
-            GameObject tGo = new GameObject("Label");
+            var tGo = new GameObject("Label");
             tGo.transform.SetParent(go.transform, false);
-            RectTransform trt = tGo.AddComponent<RectTransform>();
+            var trt = tGo.AddComponent<RectTransform>();
             trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
             trt.offsetMin = trt.offsetMax = Vector2.zero;
-            TextMeshProUGUI tmp = tGo.AddComponent<TextMeshProUGUI>();
+            var tmp = tGo.AddComponent<TextMeshProUGUI>();
             tmp.text      = label;
             tmp.fontSize  = fontSize;
             tmp.color     = Color.white;

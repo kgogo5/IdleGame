@@ -19,15 +19,38 @@ namespace IdleGame.UI
 
         private void Start()
         {
+            HideSliderHandle();
+
             MonsterManager.Instance.OnMonsterSpawned += BindToMonster;
             MonsterManager.Instance.OnStageChanged   += UpdateStage;
             UpdateStage(MonsterManager.Instance.Stage);
+
+            // MonsterManager.Start()가 먼저 실행돼 이미 몬스터가 있으면 즉시 바인딩
+            if (MonsterManager.Instance.CurrentMonster != null)
+                BindToMonster(MonsterManager.Instance.CurrentMonster);
 
             CurrencyManager.Instance.OnGoldChanged += _ => RefreshFleeButton();
             NavigationController.OnTabChanged += OnTabChanged;
 
             CreateFleeButton();
             RefreshFleeButton();
+        }
+
+        private void HideSliderHandle()
+        {
+            var slider = GetComponentInChildren<Slider>(true);
+            if (slider != null)
+            {
+                slider.enabled = false;
+                if (slider.handleRect != null)
+                    slider.handleRect.gameObject.SetActive(false);
+            }
+
+            foreach (Transform t in GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "Handle Slide Area" || t.name == "Handle")
+                    t.gameObject.SetActive(false);
+            }
         }
 
         private void CreateFleeButton()
@@ -96,7 +119,13 @@ namespace IdleGame.UI
                 _nameText.color = monster.IsBoss ? new Color(1f, 0.3f, 0.1f) : Color.white;
             }
             if (_fillImage != null)
+            {
+                // Inspector의 Image Type 설정과 무관하게 fillAmount가 동작하도록 강제 설정
+                _fillImage.type        = Image.Type.Filled;
+                _fillImage.fillMethod  = Image.FillMethod.Horizontal;
+                _fillImage.fillOrigin  = (int)Image.OriginHorizontal.Left;
                 _fillImage.color = monster.IsBoss ? new Color(0.9f, 0.2f, 0.05f) : new Color(0.2f, 0.8f, 0.2f);
+            }
             UpdateHealthBar(monster.CurrentHealth, monster.MaxHealth);
             RefreshFleeButton();
         }

@@ -64,7 +64,7 @@ namespace IdleGame.Core
             double actualDamage = System.Math.Min(damage, _currentHealth);
             CurrencyManager.Instance.AddGold(_goldReward * (actualDamage / _maxHealth) * 0.05);
 
-            _currentHealth -= damage;
+            _currentHealth = System.Math.Max(0, _currentHealth - damage);
             OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
             StartCoroutine(ShakeEffect());
             if (_currentHealth <= 0) Die();

@@ -12,8 +12,7 @@ namespace IdleGame.UI.Panels
     public class UpgradePanelUI : MonoBehaviour
     {
         private Transform _listContent;
-        private TextMeshProUGUI _summaryLeft;
-        private TextMeshProUGUI _summaryRight;
+        private TextMeshProUGUI _sumC1, _sumC2, _sumC3;
         private bool _built = false;
 
         private void Start()
@@ -29,11 +28,7 @@ namespace IdleGame.UI.Panels
                 PlayerStats.Instance.OnStatsChanged += RefreshSummary;
         }
 
-        private void OnEnable()
-        {
-            if (_built) { Refresh(); RefreshSummary(); }
-        }
-
+        private void OnEnable()  { if (_built) { Refresh(); RefreshSummary(); } }
         private void OnDestroy()
         {
             if (UpgradeManager.Instance != null)
@@ -50,90 +45,104 @@ namespace IdleGame.UI.Panels
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(20, -100), offsetMax: new Vector2(0, -20));
 
-            // 스킬 보너스 요약 박스 — 2열 레이아웃
-            var summaryBox = new GameObject("SkillSummaryBox");
-            summaryBox.transform.SetParent(transform, false);
-            var boxRt = summaryBox.AddComponent<RectTransform>();
-            boxRt.anchorMin = new Vector2(0, 1);
-            boxRt.anchorMax = new Vector2(1, 1);
-            boxRt.offsetMin = new Vector2(10, -285);
-            boxRt.offsetMax = new Vector2(-10, -100);
-            summaryBox.AddComponent<UnityEngine.UI.Image>().color = new Color(0.08f, 0.14f, 0.22f, 1f);
+            // body: 타이틀 아래 ~ 하단 채움
+            var body = new GameObject("Body");
+            body.transform.SetParent(transform, false);
+            var bodyRt = body.AddComponent<RectTransform>();
+            bodyRt.anchorMin = Vector2.zero;
+            bodyRt.anchorMax = Vector2.one;
+            bodyRt.offsetMin = new Vector2(8, 8);
+            bodyRt.offsetMax = new Vector2(-8, -90);
+            var bodyVlg = body.AddComponent<VerticalLayoutGroup>();
+            bodyVlg.spacing = 8;
+            bodyVlg.childControlWidth = true;
+            bodyVlg.childControlHeight = true;
+            bodyVlg.childForceExpandWidth = true;
+            bodyVlg.childForceExpandHeight = false;
 
-            // 타이틀
-            var titleObj = new GameObject("Title");
-            titleObj.transform.SetParent(summaryBox.transform, false);
-            var titleRt = titleObj.AddComponent<RectTransform>();
-            titleRt.anchorMin = new Vector2(0, 1); titleRt.anchorMax = new Vector2(1, 1);
-            titleRt.offsetMin = new Vector2(14, -36); titleRt.offsetMax = new Vector2(-14, -4);
-            var titleTmp = titleObj.AddComponent<TextMeshProUGUI>();
+            // 스킬 보너스 합계 박스
+            var statBox = new GameObject("SkillSummaryBox");
+            statBox.transform.SetParent(body.transform, false);
+            statBox.AddComponent<Image>().color = UITheme.BgStatBox;
+            var statVlg = statBox.AddComponent<VerticalLayoutGroup>();
+            statVlg.padding = new RectOffset(0, 0, 10, 16);
+            statVlg.spacing = 6;
+            statVlg.childControlWidth = true;
+            statVlg.childControlHeight = true;
+            statVlg.childForceExpandWidth = true;
+            statVlg.childForceExpandHeight = false;
+
+            var titleGo = new GameObject("Title");
+            titleGo.transform.SetParent(statBox.transform, false);
+            titleGo.AddComponent<LayoutElement>().preferredHeight = 36;
+            var titleTmp = titleGo.AddComponent<TextMeshProUGUI>();
             titleTmp.text = "[ 스킬 보너스 합계 ]";
-            titleTmp.fontSize = 24; titleTmp.color = new Color(0.67f, 0.8f, 1f);
-            titleTmp.richText = false; titleTmp.raycastTarget = false;
+            titleTmp.fontSize = 24;
+            titleTmp.color = UITheme.TxtHeading;
+            titleTmp.alignment = TextAlignmentOptions.Center;
+            titleTmp.richText = false;
+            titleTmp.raycastTarget = false;
 
-            // 왼쪽 열
-            var leftObj = new GameObject("Left");
-            leftObj.transform.SetParent(summaryBox.transform, false);
-            var leftRt = leftObj.AddComponent<RectTransform>();
-            leftRt.anchorMin = new Vector2(0, 0); leftRt.anchorMax = new Vector2(0.5f, 1);
-            leftRt.offsetMin = new Vector2(14, 8); leftRt.offsetMax = new Vector2(-4, -40);
-            _summaryLeft = leftObj.AddComponent<TextMeshProUGUI>();
-            _summaryLeft.fontSize = 23; _summaryLeft.color = new Color(0.8f, 0.95f, 0.8f);
-            _summaryLeft.richText = true; _summaryLeft.raycastTarget = false;
+            var colsRow = new GameObject("Cols");
+            colsRow.transform.SetParent(statBox.transform, false);
+            var colsHlg = colsRow.AddComponent<HorizontalLayoutGroup>();
+            colsHlg.padding = new RectOffset(14, 14, 4, 0);
+            colsHlg.spacing = 8;
+            colsHlg.childControlWidth = true;
+            colsHlg.childControlHeight = true;
+            colsHlg.childForceExpandWidth = true;
+            colsHlg.childForceExpandHeight = false;
 
-            // 오른쪽 열
-            var rightObj = new GameObject("Right");
-            rightObj.transform.SetParent(summaryBox.transform, false);
-            var rightRt = rightObj.AddComponent<RectTransform>();
-            rightRt.anchorMin = new Vector2(0.5f, 0); rightRt.anchorMax = new Vector2(1, 1);
-            rightRt.offsetMin = new Vector2(4, 8); rightRt.offsetMax = new Vector2(-14, -40);
-            _summaryRight = rightObj.AddComponent<TextMeshProUGUI>();
-            _summaryRight.fontSize = 23; _summaryRight.color = new Color(0.8f, 0.95f, 0.8f);
-            _summaryRight.richText = true; _summaryRight.raycastTarget = false;
+            _sumC1 = MakeColTmp(colsRow.transform);
+            _sumC2 = MakeColTmp(colsRow.transform);
+            _sumC3 = MakeColTmp(colsRow.transform);
 
-            GameObject scrollObj = UIHelper.MakeScrollView(transform, out _listContent);
-            RectTransform scrollRt = scrollObj.GetComponent<RectTransform>();
-            scrollRt.anchorMin = Vector2.zero;
-            scrollRt.anchorMax = Vector2.one;
-            scrollRt.offsetMin = new Vector2(8, 8);
-            scrollRt.offsetMax = new Vector2(-8, -290);
+            var scrollGo = UIHelper.MakeScrollView(body.transform, out _listContent);
+            var scrollLe = scrollGo.AddComponent<LayoutElement>();
+            scrollLe.minHeight = 100;
+            scrollLe.flexibleHeight = 1;
+        }
+
+        private static TextMeshProUGUI MakeColTmp(Transform parent)
+        {
+            var go = new GameObject("Col");
+            go.transform.SetParent(parent, false);
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.fontSize = 24;
+            tmp.color = UITheme.TxtStatSkill;
+            tmp.richText = true;
+            tmp.raycastTarget = false;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
+            tmp.overflowMode = TextOverflowModes.Overflow;
+            return tmp;
         }
 
         private void RefreshSummary()
         {
-            if (_summaryLeft == null || _summaryRight == null || PlayerStats.Instance == null) return;
+            if (_sumC1 == null || PlayerStats.Instance == null) return;
             var ps = PlayerStats.Instance;
 
-            string Fmt(double v) =>
-                v == 0 ? "<color=#555>0</color>" : $"<color=#7EFF7E>+{NumberFormatter.Format(v)}</color>";
-            string FmtSpeed(double v) =>
-                v == 0 ? "<color=#555>0/s</color>" : $"<color=#7EFF7E>+{v:F2}/s</color>";
+            _sumC1.text =
+                $"클릭 데미지\n{UITheme.SkillBonus(ps.UpgradeClickDamage)}\n\n" +
+                $"자동공격\n{UITheme.SkillBonus(ps.UpgradeAutoDamage)}";
 
-            _summaryLeft.text =
-                $"클릭 데미지\n{Fmt(ps.UpgradeClickDamage)}\n\n" +
-                $"자동공격\n{Fmt(ps.UpgradeAutoDamage)}\n\n" +
-                $"골드 배율\n{Fmt(ps.UpgradeGoldMultiplier)}";
+            _sumC2.text =
+                $"공격속도\n{UITheme.SkillSpeed(ps.UpgradeAttackSpeed)}\n\n" +
+                $"자동공격속도\n{UITheme.SkillSpeed(ps.UpgradeAutoAttackSpeed)}";
 
-            _summaryRight.text =
-                $"공격속도\n{FmtSpeed(ps.UpgradeAttackSpeed)}\n\n" +
-                $"자동공격속도\n{FmtSpeed(ps.UpgradeAutoAttackSpeed)}";
+            _sumC3.text = $"골드 배율\n{UITheme.SkillBonus(ps.UpgradeGoldMultiplier)}";
         }
 
         private void Refresh()
         {
             RefreshSummary();
-            if (_listContent == null) return;
-            if (UpgradeManager.Instance == null) return;
+            if (_listContent == null || UpgradeManager.Instance == null) return;
 
             foreach (Transform child in _listContent)
                 Destroy(child.gameObject);
 
             var upgrades = UpgradeManager.Instance.Upgrades;
-            if (upgrades == null || upgrades.Length == 0)
-            {
-                ShowEmpty("스킬 데이터 없음");
-                return;
-            }
+            if (upgrades == null || upgrades.Length == 0) { ShowEmpty("스킬 데이터 없음"); return; }
 
             bool anyVisible = false;
             foreach (var upgrade in upgrades)
@@ -151,89 +160,73 @@ namespace IdleGame.UI.Panels
         {
             UIHelper.MakeText(_listContent, msg, 18, TextAnchor.MiddleCenter,
                 anchorMin: new Vector2(0, 0.4f), anchorMax: new Vector2(1, 0.6f),
-                color: new Color(0.6f, 0.6f, 0.6f));
+                color: UITheme.TxtEmpty);
         }
 
         private void CreateSkillRow(UpgradeData upgrade)
         {
-            int lv = UpgradeManager.Instance.GetLevel(upgrade);
-            bool maxed = upgrade.maxLevel > 0 && lv >= upgrade.maxLevel;
+            int lv    = UpgradeManager.Instance.GetLevel(upgrade);
+            bool maxed  = upgrade.maxLevel > 0 && lv >= upgrade.maxLevel;
             bool canBuy = !maxed && UpgradeManager.Instance.CanBuy(upgrade);
             double cost = UpgradeManager.Instance.GetNextCost(upgrade);
 
-            // Row container
-            GameObject row = new GameObject(upgrade.name + "_Row");
+            var row = new GameObject(upgrade.name + "_Row");
             row.transform.SetParent(_listContent, false);
-            RectTransform rowRt = row.AddComponent<RectTransform>();
-            rowRt.sizeDelta = new Vector2(0, 175);
-            Image rowBg = row.AddComponent<Image>();
-            rowBg.color = maxed
-                ? new Color(0.22f, 0.18f, 0.05f, 1f)
-                : new Color(0.12f, 0.12f, 0.18f, 1f);
+            row.AddComponent<RectTransform>().sizeDelta = new Vector2(0, 175);
+            row.AddComponent<Image>().color = maxed ? UITheme.BgRowMaxed : UITheme.BgRowSkill;
 
             string categoryTag = upgrade.statType switch
             {
                 StatType.AttackSpeed     => "<color=#88DDFF>[클릭공속] </color>",
                 StatType.AutoAttackSpeed => "<color=#AAFFAA>[자동공속] </color>",
                 StatType.AutoDamage      => "<color=#FFCC88>[자동공격] </color>",
-                StatType.GoldMultiplier  => "<color=#FFEE55>[골드] </color>",
+                StatType.GoldMultiplier  => $"<color={UITheme.HexGold}>[골드] </color>",
                 _                        => "<color=#FFFFFF>[클릭] </color>"
             };
-
-            // 이름 + 레벨 (상단)
             string levelStr = maxed ? " [MAX]" : $" Lv.{lv}" + (upgrade.maxLevel > 0 ? $"/{upgrade.maxLevel}" : "");
+
             MakeRowLabel(row.transform, categoryTag + upgrade.upgradeName + levelStr,
                 fontSize: 32, color: Color.white,
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, -70), offsetMax: new Vector2(-158, -4));
 
-            // 설명 라벨: 이름 아래
             MakeRowLabel(row.transform, upgrade.description,
-                fontSize: 24, color: new Color(0.72f, 0.72f, 0.72f),
+                fontSize: 24, color: UITheme.TxtDesc,
                 anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-158, -78),
                 wrap: true);
 
-            // Right: Buy button
             string btnLabel = maxed ? "MAX" : (canBuy ? $"구매\n{NumberFormatter.Format(cost)}G" : $"{NumberFormatter.Format(cost)}G");
-            Color btnColor = maxed
-                ? new Color(0.4f, 0.32f, 0.05f)
-                : (canBuy ? new Color(0.15f, 0.5f, 0.15f) : new Color(0.28f, 0.18f, 0.18f));
-            GameObject btn = UIHelper.MakeButton(row.transform, btnLabel, 22, btnColor);
-            RectTransform btnRt = btn.GetComponent<RectTransform>();
-            btnRt.anchorMin = new Vector2(1, 0.5f);
-            btnRt.anchorMax = new Vector2(1, 0.5f);
+            Color  btnColor = maxed ? UITheme.BtnMaxed : (canBuy ? UITheme.BtnBuyable : UITheme.BtnTooExpensive);
+
+            var btn   = UIHelper.MakeButton(row.transform, btnLabel, 22, btnColor);
+            var btnRt = btn.GetComponent<RectTransform>();
+            btnRt.anchorMin = new Vector2(1, 0.5f); btnRt.anchorMax = new Vector2(1, 0.5f);
             btnRt.pivot     = new Vector2(1, 0.5f);
             btnRt.anchoredPosition = new Vector2(-10, 0);
             btnRt.sizeDelta = new Vector2(140, 120);
 
-            Button button = btn.GetComponent<Button>();
-            if (canBuy)
-                button.onClick.AddListener(() => UpgradeManager.Instance.Buy(upgrade));
-            else
-                button.interactable = false;
+            var button = btn.GetComponent<Button>();
+            if (canBuy) button.onClick.AddListener(() => UpgradeManager.Instance.Buy(upgrade));
+            else        button.interactable = false;
         }
 
         private static void MakeRowLabel(Transform parent, string text, float fontSize, Color color,
             Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax, bool wrap = false)
         {
-            GameObject go = new GameObject("Label");
+            var go = new GameObject("Label");
             go.transform.SetParent(parent, false);
-            RectTransform rt = go.AddComponent<RectTransform>();
-            rt.anchorMin = anchorMin;
-            rt.anchorMax = anchorMax;
-            rt.offsetMin = offsetMin;
-            rt.offsetMax = offsetMax;
-            TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
-            tmp.text      = text;
-            tmp.fontSize  = fontSize;
-            tmp.color     = color;
-            tmp.alignment = TextAlignmentOptions.MidlineLeft;
-            tmp.textWrappingMode = wrap
-                ? TMPro.TextWrappingModes.Normal
-                : TMPro.TextWrappingModes.NoWrap;
-            tmp.overflowMode  = TextOverflowModes.Ellipsis;
-            tmp.raycastTarget = false;
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchorMin = anchorMin; rt.anchorMax = anchorMax;
+            rt.offsetMin = offsetMin; rt.offsetMax = offsetMax;
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.text             = text;
+            tmp.fontSize         = fontSize;
+            tmp.color            = color;
+            tmp.alignment        = TextAlignmentOptions.MidlineLeft;
+            tmp.textWrappingMode = wrap ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
+            tmp.overflowMode     = TextOverflowModes.Ellipsis;
+            tmp.raycastTarget    = false;
         }
     }
 }

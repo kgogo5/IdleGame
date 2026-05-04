@@ -33,8 +33,8 @@ namespace IdleGame.Managers
         private double _dropRatePct;
         private double _bossSpawnRatePct;
 
-        public double ClickDamage     => (_baseClickDamage     + _clickDamageFlat)     * (1 + _clickDamagePct);
-        public double AutoDamage      => (_baseAutoDamage      + _autoDamageFlat)      * (1 + _autoDamagePct);
+        public double ClickDamage => Math.Max(0, (_baseClickDamage + _clickDamageFlat) * (1 + _clickDamagePct));
+        public double AutoDamage  => Math.Max(0, (_baseAutoDamage  + _autoDamageFlat)  * (1 + _autoDamagePct));
         public double GoldMultiplier  => (_baseGoldMultiplier  + _goldMultiplierFlat)  * (1 + _goldMultiplierPct);
 
         // 공격속도: 최소/최대 클램프
@@ -139,12 +139,12 @@ namespace IdleGame.Managers
             while (true)
             {
                 yield return null;
+                if (AutoDamage <= 0) { elapsed = 0f; continue; }
                 elapsed += Time.deltaTime;
                 if (elapsed >= AutoAttackInterval)
                 {
                     elapsed -= AutoAttackInterval;
-                    if (AutoDamage > 0)
-                        MonsterManager.Instance?.CurrentMonster?.TakeDamage(AutoDamage);
+                    MonsterManager.Instance?.CurrentMonster?.TakeDamage(AutoDamage);
                 }
             }
         }

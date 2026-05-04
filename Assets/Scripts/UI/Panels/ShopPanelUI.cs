@@ -11,9 +11,9 @@ namespace IdleGame.UI.Panels
 {
     public class ShopPanelUI : MonoBehaviour
     {
-        private const int ROW_H    = 160;
-        private const int BTN_W    = 150;
-        private const int BTN_H    = 110;
+        private const int   ROW_H  = 160;
+        private const int   BTN_W  = 150;
+        private const int   BTN_H  = 110;
         private const float NAME_F = 32f;
         private const float DESC_F = 26f;
         private const float BTN_F  = 28f;
@@ -47,21 +47,18 @@ namespace IdleGame.UI.Panels
                 offsetMin: new Vector2(20, -100), offsetMax: new Vector2(0, -20));
 
             // 탭 바
-            GameObject tabBar = new GameObject("TabBar");
+            var tabBar = new GameObject("TabBar");
             tabBar.transform.SetParent(transform, false);
-            RectTransform tabRt = tabBar.AddComponent<RectTransform>();
-            tabRt.anchorMin = new Vector2(0, 1);
-            tabRt.anchorMax = new Vector2(1, 1);
-            tabRt.offsetMin = new Vector2(10, -155);
-            tabRt.offsetMax = new Vector2(-10, -88);
-
-            HorizontalLayoutGroup hlg = tabBar.AddComponent<HorizontalLayoutGroup>();
+            var tabRt = tabBar.AddComponent<RectTransform>();
+            tabRt.anchorMin = new Vector2(0, 1); tabRt.anchorMax = new Vector2(1, 1);
+            tabRt.offsetMin = new Vector2(10, -155); tabRt.offsetMax = new Vector2(-10, -88);
+            var hlg = tabBar.AddComponent<HorizontalLayoutGroup>();
             hlg.spacing = 8;
             hlg.childControlWidth = hlg.childControlHeight = true;
             hlg.childForceExpandWidth = hlg.childForceExpandHeight = true;
 
-            GameObject buyTabObj  = CreateTabButton(tabBar.transform, "구매");
-            GameObject sellTabObj = CreateTabButton(tabBar.transform, "판매");
+            var buyTabObj  = CreateTabButton(tabBar.transform, "구매");
+            var sellTabObj = CreateTabButton(tabBar.transform, "판매");
             _buyTabImg  = buyTabObj.GetComponent<Image>();
             _sellTabImg = sellTabObj.GetComponent<Image>();
             _buyTabTxt  = buyTabObj.GetComponentInChildren<TextMeshProUGUI>();
@@ -70,33 +67,31 @@ namespace IdleGame.UI.Panels
             sellTabObj.GetComponent<Button>().onClick.AddListener(() => ShowTab(false));
 
             // 스크롤뷰
-            GameObject scrollObj = UIHelper.MakeScrollView(transform, out _listContent);
-            RectTransform scrollRt = scrollObj.GetComponent<RectTransform>();
-            scrollRt.anchorMin = new Vector2(0, 0);
-            scrollRt.anchorMax = new Vector2(1, 1);
-            scrollRt.offsetMin = new Vector2(10, 10);
-            scrollRt.offsetMax = new Vector2(-10, -160);
+            var scrollObj = UIHelper.MakeScrollView(transform, out _listContent);
+            var scrollRt  = scrollObj.GetComponent<RectTransform>();
+            scrollRt.anchorMin = Vector2.zero; scrollRt.anchorMax = Vector2.one;
+            scrollRt.offsetMin = new Vector2(10, 10); scrollRt.offsetMax = new Vector2(-10, -160);
         }
 
         private GameObject CreateTabButton(Transform parent, string label)
         {
-            GameObject obj = new GameObject(label + "Tab");
+            var obj = new GameObject(label + "Tab");
             obj.transform.SetParent(parent, false);
             obj.AddComponent<RectTransform>();
-            Image img = obj.AddComponent<Image>();
-            img.color = new Color(0.2f, 0.2f, 0.25f);
-            Button btn = obj.AddComponent<Button>();
+            var img = obj.AddComponent<Image>();
+            img.color = UITheme.TabInactive;
+            var btn = obj.AddComponent<Button>();
             btn.targetGraphic = img;
 
-            GameObject textObj = new GameObject("Label");
+            var textObj = new GameObject("Label");
             textObj.transform.SetParent(obj.transform, false);
-            RectTransform trt = textObj.AddComponent<RectTransform>();
+            var trt = textObj.AddComponent<RectTransform>();
             trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
             trt.offsetMin = trt.offsetMax = Vector2.zero;
-            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
+            var tmp = textObj.AddComponent<TextMeshProUGUI>();
             tmp.text      = label;
             tmp.fontSize  = 32;
-            tmp.color     = new Color(0.75f, 0.75f, 0.75f);
+            tmp.color     = UITheme.TxtTabInactive;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.raycastTarget = false;
             return obj;
@@ -112,10 +107,10 @@ namespace IdleGame.UI.Panels
         private void UpdateTabColors()
         {
             if (_buyTabImg == null) return;
-            _buyTabImg.color  = _isBuyTab  ? new Color(0.2f, 0.55f, 0.9f)  : new Color(0.18f, 0.18f, 0.22f);
-            _sellTabImg.color = !_isBuyTab ? new Color(0.75f, 0.35f, 0.1f) : new Color(0.18f, 0.18f, 0.22f);
-            _buyTabTxt.color  = _isBuyTab  ? Color.white : new Color(0.7f, 0.7f, 0.7f);
-            _sellTabTxt.color = !_isBuyTab ? Color.white : new Color(0.7f, 0.7f, 0.7f);
+            _buyTabImg.color  = _isBuyTab  ? UITheme.TabActiveBuy  : UITheme.TabInactive;
+            _sellTabImg.color = !_isBuyTab ? UITheme.TabActiveSell : UITheme.TabInactive;
+            _buyTabTxt.color  = _isBuyTab  ? Color.white : UITheme.TxtTabInactive;
+            _sellTabTxt.color = !_isBuyTab ? Color.white : UITheme.TxtTabInactive;
         }
 
         private Coroutine _holdSellRoutine;
@@ -167,47 +162,44 @@ namespace IdleGame.UI.Panels
 
         private void CreateSellAllNormalRow(bool hasNormal)
         {
-            GameObject row = new GameObject("SellAllNormal_Row");
+            var row = new GameObject("SellAllNormal_Row");
             row.transform.SetParent(_listContent, false);
-            RectTransform rt = row.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(0, 80);
-            row.AddComponent<Image>().color = new Color(0.10f, 0.10f, 0.14f);
+            row.AddComponent<RectTransform>().sizeDelta = new Vector2(0, 80);
+            row.AddComponent<Image>().color = UITheme.BgRowSellAll;
 
-            GameObject btn = UIHelper.MakeButton(row.transform,
-                "노말 아이템 전부 판매", 30,
-                hasNormal ? new Color(0.45f, 0.20f, 0.08f) : new Color(0.22f, 0.22f, 0.22f));
-            RectTransform brt = btn.GetComponent<RectTransform>();
-            brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(1, 1);
+            var btn = UIHelper.MakeButton(row.transform, "노말 아이템 전부 판매", 30,
+                hasNormal ? UITheme.BtnSellAll : UITheme.BtnDisabled);
+            var brt = btn.GetComponent<RectTransform>();
+            brt.anchorMin = Vector2.zero; brt.anchorMax = Vector2.one;
             brt.offsetMin = new Vector2(14, 10); brt.offsetMax = new Vector2(-14, -10);
 
             var b = btn.GetComponent<Button>();
-            if (hasNormal)
-                b.onClick.AddListener(() => InventoryManager.Instance.SellAllByRarity(ItemRarity.Normal));
-            else
-                b.interactable = false;
+            if (hasNormal) b.onClick.AddListener(() => InventoryManager.Instance.SellAllByRarity(ItemRarity.Normal));
+            else           b.interactable = false;
         }
 
         private void CreateBuyRow(ItemData item)
         {
-            GameObject row = MakeRow(item.name);
+            var row   = MakeRow(item.name);
             int owned = InventoryManager.Instance.GetCount(item);
-            string ownedStr = owned > 0 ? $"  [보유: {owned}]" : "";
-            string nameText = item.isStackable
+            string ownedStr  = owned > 0 ? $"  [보유: {owned}]" : "";
+            string rarityHex = ColorUtility.ToHtmlStringRGB(item.rarity.ToColor());
+            string nameText  = item.isStackable
                 ? $"{item.itemName}{ownedStr}"
-                : $"<color=#888888>[{item.slot.ToKorean()}]</color> <color=#{ColorUtility.ToHtmlStringRGB(item.rarity.ToColor())}>[{item.rarity.ToKorean()}]</color> {item.itemName}{ownedStr}";
+                : $"<color=#888888>[{item.slot.ToKorean()}]</color> <color=#{rarityHex}>[{item.rarity.ToKorean()}]</color> {item.itemName}{ownedStr}";
 
             RowLabel(row.transform, nameText, NAME_F, Color.white,
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, -74), offsetMax: new Vector2(-(BTN_W + 18), -4),
                 richText: true);
-            RowLabel(row.transform, item.description, DESC_F, new Color(0.75f, 0.75f, 0.75f),
+            RowLabel(row.transform, item.description, DESC_F, UITheme.TxtDesc,
                 anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-(BTN_W + 18), -80));
 
             bool canBuy = InventoryManager.Instance.CanBuy(item);
-            GameObject btn = UIHelper.MakeButton(row.transform,
+            var btn = UIHelper.MakeButton(row.transform,
                 $"구매\n{NumberFormatter.Format(item.buyPrice)}G", (int)BTN_F,
-                canBuy ? new Color(0.2f, 0.55f, 0.2f) : new Color(0.28f, 0.28f, 0.28f));
+                canBuy ? UITheme.BtnShopBuyable : UITheme.BtnShopCantAfford);
             SetBtnPos(btn, BTN_W, BTN_H);
             var b = btn.GetComponent<Button>();
             if (canBuy) b.onClick.AddListener(() => InventoryManager.Instance.Buy(item));
@@ -217,38 +209,34 @@ namespace IdleGame.UI.Panels
         private void CreateSellRow(ItemData item)
         {
             bool isEquipped = !item.isStackable && InventoryManager.Instance.IsEquipped(item);
-
-            GameObject row = MakeRow(item.name);
-            row.GetComponent<Image>().color = isEquipped
-                ? new Color(0.10f, 0.18f, 0.15f)   // 장착 중: 초록 틴트
-                : new Color(0.13f, 0.13f, 0.18f);
+            var row = MakeRow(item.name);
+            row.GetComponent<Image>().color = isEquipped ? UITheme.BgRowEquipped : UITheme.BgRowDefault;
 
             int owned = InventoryManager.Instance.GetCount(item);
-            string equippedTag = isEquipped ? "  <color=#00DD88>[장착 중]</color>" : "";
-            string nameText = item.isStackable
+            string equippedTag = isEquipped ? $"  <color={UITheme.HexEquipped}>[장착 중]</color>" : "";
+            string rarityHex   = ColorUtility.ToHtmlStringRGB(item.rarity.ToColor());
+            string nameText    = item.isStackable
                 ? $"{item.itemName}  [보유: {owned}]"
-                : $"<color=#{ColorUtility.ToHtmlStringRGB(item.rarity.ToColor())}>[{item.rarity.ToKorean()}]</color> {item.itemName}{equippedTag}  [보유: {owned}]";
+                : $"<color=#{rarityHex}>[{item.rarity.ToKorean()}]</color> {item.itemName}{equippedTag}  [보유: {owned}]";
 
             RowLabel(row.transform, nameText, NAME_F, Color.white,
                 anchorMin: new Vector2(0, 1), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, -74), offsetMax: new Vector2(-(BTN_W + 18), -4),
                 richText: true);
-            RowLabel(row.transform, item.description, DESC_F, new Color(0.75f, 0.75f, 0.75f),
+            RowLabel(row.transform, item.description, DESC_F, UITheme.TxtDesc,
                 anchorMin: new Vector2(0, 0), anchorMax: new Vector2(1, 1),
                 offsetMin: new Vector2(14, 6), offsetMax: new Vector2(-(BTN_W + 18), -80));
 
             if (isEquipped)
             {
-                GameObject btn = UIHelper.MakeButton(row.transform,
-                    "장착 중", (int)BTN_F, new Color(0.22f, 0.22f, 0.22f));
-                SetBtnPos(btn, BTN_W, BTN_H);
-                btn.GetComponent<Button>().interactable = false;
+                var disBtn = UIHelper.MakeButton(row.transform, "장착 중", (int)BTN_F, UITheme.BtnDisabled);
+                SetBtnPos(disBtn, BTN_W, BTN_H);
+                disBtn.GetComponent<Button>().interactable = false;
                 return;
             }
 
-            GameObject sellBtn = UIHelper.MakeButton(row.transform,
-                $"판매\n{NumberFormatter.Format(item.sellPrice)}G", (int)BTN_F,
-                new Color(0.6f, 0.3f, 0.1f));
+            var sellBtn = UIHelper.MakeButton(row.transform,
+                $"판매\n{NumberFormatter.Format(item.sellPrice)}G", (int)BTN_F, UITheme.BtnSell);
             SetBtnPos(sellBtn, BTN_W, BTN_H);
 
             var et = sellBtn.AddComponent<EventTrigger>();
@@ -275,25 +263,23 @@ namespace IdleGame.UI.Panels
 
         private IEnumerator HoldSell(ItemData item)
         {
-            // 0.5초 대기 후 홀드 모드 시작
             yield return new WaitForSeconds(0.5f);
-
             _holdActivated = true;
             float interval = 0.5f;
             while (InventoryManager.Instance.IsOwned(item))
             {
                 InventoryManager.Instance.Sell(item);
                 yield return new WaitForSeconds(interval);
-                interval = Mathf.Max(interval * 0.8f, 0.05f); // 매 판매마다 20% 빨라짐, 최소 0.05초
+                interval = Mathf.Max(interval * 0.8f, 0.05f);
             }
         }
 
         private GameObject MakeRow(string id)
         {
-            GameObject row = new GameObject(id + "_Row");
+            var row = new GameObject(id + "_Row");
             row.transform.SetParent(_listContent, false);
             row.AddComponent<RectTransform>().sizeDelta = new Vector2(0, ROW_H);
-            row.AddComponent<Image>().color = new Color(0.13f, 0.13f, 0.18f);
+            row.AddComponent<Image>().color = UITheme.BgRowDefault;
             return row;
         }
 
@@ -301,27 +287,26 @@ namespace IdleGame.UI.Panels
             Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax,
             bool richText = false)
         {
-            GameObject go = new GameObject("Label");
+            var go = new GameObject("Label");
             go.transform.SetParent(parent, false);
-            RectTransform rt = go.AddComponent<RectTransform>();
+            var rt = go.AddComponent<RectTransform>();
             rt.anchorMin = anchorMin; rt.anchorMax = anchorMax;
             rt.offsetMin = offsetMin; rt.offsetMax = offsetMax;
-            TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
+            var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text             = text;
             tmp.fontSize         = fontSize;
             tmp.color            = color;
             tmp.richText         = richText;
             tmp.alignment        = TextAlignmentOptions.MidlineLeft;
-            tmp.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+            tmp.textWrappingMode = TextWrappingModes.NoWrap;
             tmp.overflowMode     = TextOverflowModes.Ellipsis;
             tmp.raycastTarget    = false;
         }
 
         private static void SetBtnPos(GameObject btn, float width, float height)
         {
-            RectTransform rt = btn.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(1, 0.5f);
-            rt.anchorMax = new Vector2(1, 0.5f);
+            var rt = btn.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1, 0.5f); rt.anchorMax = new Vector2(1, 0.5f);
             rt.pivot     = new Vector2(1, 0.5f);
             rt.anchoredPosition = new Vector2(-10, 0);
             rt.sizeDelta = new Vector2(width, height);
@@ -331,7 +316,7 @@ namespace IdleGame.UI.Panels
         {
             UIHelper.MakeText(_listContent, text, 30, TextAnchor.MiddleCenter,
                 anchorMin: new Vector2(0, 0.4f), anchorMax: new Vector2(1, 0.6f),
-                color: new Color(0.5f, 0.5f, 0.5f));
+                color: UITheme.TxtEmpty);
         }
     }
 }

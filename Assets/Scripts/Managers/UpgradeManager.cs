@@ -51,20 +51,20 @@ namespace IdleGame.Managers
             list.Add(Make("손놀림 향상",  "클릭 공속 +0.3회/초 / 레벨 (최대 5레벨)",   50,    1.45f,  5, StatType.AttackSpeed,      0.3, unlock: 1));
 
             // ── 스테이지 2: 자동 공격 + 자동 공속 ───────────────────────
-            list.Add(Make("자동 타격기",  "자동공격 데미지 +5 / 레벨",                 80,    1.42f,  0, StatType.AutoDamage,       5,   unlock: 2));
-            list.Add(Make("연사 장치",    "자동공격 속도 +0.2회/초 / 레벨 (최대 5레벨)", 120,   1.45f,  5, StatType.AutoAttackSpeed,  0.2, unlock: 2));
+            list.Add(Make("자동 타격기",  "자동공격 데미지 +3 / 레벨",                 80,    1.42f,  0, StatType.AutoDamage,       3,   unlock: 2));
+            list.Add(Make("연사 장치",    "자동공격 속도 +0.1회/초 / 레벨 (최대 5레벨)", 120,   1.45f,  5, StatType.AutoAttackSpeed,  0.1, unlock: 2));
 
             // ── 스테이지 3: 클릭·자동 중급 강화 ─────────────────────────
             list.Add(Make("강타 훈련",    "클릭 데미지 +10 / 레벨",                    300,   1.50f,  0, StatType.ClickDamage,     10,   unlock: 3));
-            list.Add(Make("강화 타격기",  "자동공격 데미지 +6 / 레벨",                  400,   1.50f,  0, StatType.AutoDamage,       6,   unlock: 3));
+            list.Add(Make("강화 타격기",  "자동공격 데미지 +4 / 레벨",                  400,   1.50f,  0, StatType.AutoDamage,       4,   unlock: 3));
 
             // ── 스테이지 4: 골드 + 자동공속 강화 ────────────────────────
             list.Add(Make("금 감지",      "골드 배율 +0.1 / 레벨",                     1000,  1.55f,  0, StatType.GoldMultiplier,  0.1,  unlock: 4));
-            list.Add(Make("고속 연사",    "자동공격 속도 +0.4회/초 / 레벨 (최대 6레벨)", 1500,  1.55f,  6, StatType.AutoAttackSpeed,  0.4, unlock: 4));
+            list.Add(Make("고속 연사",    "자동공격 속도 +0.2회/초 / 레벨 (최대 6레벨)", 1500,  1.55f,  6, StatType.AutoAttackSpeed,  0.2, unlock: 4));
 
             // ── 스테이지 5: 고급 공격력 ──────────────────────────────────
             list.Add(Make("일격필살",     "클릭 데미지 +20 / 레벨 (최대 12레벨)",       4000,  1.65f, 12, StatType.ClickDamage,     20,   unlock: 5));
-            list.Add(Make("자동 포탑",    "자동공격 데미지 +12 / 레벨",                 5000,  1.65f,  0, StatType.AutoDamage,      12,   unlock: 5));
+            list.Add(Make("자동 포탑",    "자동공격 데미지 +7 / 레벨",                  5000,  1.65f,  0, StatType.AutoDamage,       7,   unlock: 5));
 
             // ── 스테이지 6: 최고급 공속 + 골드 ──────────────────────────
             list.Add(Make("초고속 클릭",  "클릭 공속 +0.8회/초 / 레벨 (최대 8레벨)",   12000, 1.70f,  8, StatType.AttackSpeed,     0.8,  unlock: 6));

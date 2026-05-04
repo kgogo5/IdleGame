@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 using IdleGame.Data;
 using IdleGame.Managers;
+using IdleGame.UI;
 
 namespace IdleGame.UI
 {
@@ -64,13 +65,7 @@ namespace IdleGame.UI
 
         private IEnumerator RunToast(ItemData item)
         {
-            Color rarityColor = item.rarity switch
-            {
-                ItemRarity.Rare      => new Color(0.35f, 0.65f, 1f),
-                ItemRarity.Unique    => new Color(0.9f,  0.55f, 0.1f),
-                ItemRarity.Legendary => new Color(0.85f, 0.25f, 0.85f),
-                _                    => new Color(0.75f, 0.75f, 0.75f),
-            };
+            Color rarityColor = item.rarity.ToColor();
 
             string rarityLabel = item.rarity switch
             {
@@ -88,7 +83,7 @@ namespace IdleGame.UI
             rt.sizeDelta = new Vector2(TOAST_WIDTH, TOAST_HEIGHT);
 
             Image bg = toastObj.AddComponent<Image>();
-            bg.color = new Color(0.07f, 0.07f, 0.12f, 0.92f);
+            bg.color = UITheme.BgToast;
 
             // 좌측 색상 바
             GameObject bar = new GameObject("Bar");
@@ -131,7 +126,7 @@ namespace IdleGame.UI
             {
                 elapsed += Time.deltaTime;
                 float alpha = 1f - (elapsed / FADE_DURATION);
-                if (bg  != null) bg.color  = new Color(0.07f, 0.07f, 0.12f, 0.92f * alpha);
+                if (bg  != null) bg.color  = new Color(UITheme.BgToast.r, UITheme.BgToast.g, UITheme.BgToast.b, UITheme.BgToast.a * alpha);
                 if (barImg != null) barImg.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, alpha);
                 if (tmp != null) tmp.alpha = alpha;
                 yield return null;

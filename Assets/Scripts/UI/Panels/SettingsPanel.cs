@@ -60,6 +60,7 @@ namespace IdleGame.UI.Panels
             settingsButton.onClick.AddListener(OpenSettings);
             SetupOverlayClose();
             ApplyStyles();
+            settingsPopup.SetActive(false);
         }
 
         private void SetupOverlayClose()

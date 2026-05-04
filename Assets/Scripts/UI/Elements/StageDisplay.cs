@@ -128,11 +128,6 @@ namespace IdleGame.UI
             cardRt.pivot     = new Vector2(0.5f, 0.5f);
             cardRt.sizeDelta = new Vector2(340, 500);
             card.AddComponent<Image>().color = new Color(0.09f, 0.11f, 0.17f);
-            // 카드 클릭은 오버레이로 전파 방지
-            card.AddComponent<Image>(); // 이미 추가됨, raycastTarget=true가 기본
-            // 별도 block
-            var blocker = card.GetComponent<Image>();
-            blocker.raycastTarget = true;
 
             // ── 타이틀 ──
             var title = new GameObject("Title");
