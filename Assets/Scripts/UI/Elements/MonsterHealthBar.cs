@@ -20,6 +20,7 @@ namespace IdleGame.UI
         private void Start()
         {
             HideSliderHandle();
+            ApplyNameTextStyle();
 
             MonsterManager.Instance.OnMonsterSpawned += BindToMonster;
             MonsterManager.Instance.OnStageChanged   += UpdateStage;
@@ -34,6 +35,14 @@ namespace IdleGame.UI
 
             CreateFleeButton();
             RefreshFleeButton();
+        }
+
+        private void ApplyNameTextStyle()
+        {
+            if (_nameText == null) return;
+            _nameText.fontSize          = 32;
+            _nameText.verticalAlignment = VerticalAlignmentOptions.Middle;
+            _nameText.margin            = new Vector4(-32f, 0f, -98.8f, 0f);
         }
 
         private void HideSliderHandle()
