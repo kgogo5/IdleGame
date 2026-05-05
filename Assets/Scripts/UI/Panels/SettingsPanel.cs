@@ -585,6 +585,16 @@ namespace IdleGame.UI.Panels
 
             AddAdminDivider(sc);
 
+            AddAdminLabel(sc, "콘텐츠 관리");
+            AddAdminButton(sc, "스테이지 / 몬스터 관리 열기", new Color(0.30f, 0.18f, 0.45f), () =>
+            {
+                var canvas = GetComponentInParent<Canvas>();
+                if (canvas != null)
+                    ContentManagerPanel.OpenOrCreate(canvas.transform);
+            });
+
+            AddAdminDivider(sc);
+
             AddDevMultiplierSection(sc);
         }
 

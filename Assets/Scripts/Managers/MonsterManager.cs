@@ -24,8 +24,13 @@ namespace IdleGame.Core
 
         private MonsterData _fallbackBossData; // Inspector에 보스가 없을 때 코드 폴백
 
+        // 콘텐츠 관리 패널용 공개 접근자
+        public StageConfig[]  StageConfigs      => _stageConfigs;
+        public MonsterData[]  DefaultMonsterPool => _monsterDataList;
+        public MonsterData    DefaultBossData    => _defaultBossData ?? _fallbackBossData;
+
         public double FleeCost => CurrencyManager.Instance != null
-            ? System.Math.Max(1, CurrencyManager.Instance.Gold * 0.3)
+            ? System.Math.Max(1, CurrencyManager.Instance.Gold * Data.GameConfig.Get().fleeCostRatio)
             : 0;
         public bool CanFlee() => CurrencyManager.Instance != null;
 
