@@ -10,12 +10,12 @@ namespace IdleGame.Managers
     {
         public static PlayerStats Instance { get; private set; }
 
-        [Header("기본 스탯")]
-        [SerializeField] private double _baseClickDamage     = 10;
-        [SerializeField] private double _baseAttackSpeed     = 2;   // 클릭 공격 횟수/초
-        [SerializeField] private double _baseAutoDamage      = 0;   // 자동공격 1회 데미지
-        [SerializeField] private double _baseAutoAttackSpeed = 1;   // 자동공격 횟수/초
-        [SerializeField] private double _baseGoldMultiplier  = 1;
+        // 기본 스탯 — GameConfig.asset 에서 Awake 시 로드됨
+        private double _baseClickDamage     = 10;
+        private double _baseAttackSpeed     = 2;
+        private double _baseAutoDamage      = 0;
+        private double _baseAutoAttackSpeed = 1;
+        private double _baseGoldMultiplier  = 1;
 
         // 업그레이드 플랫 보너스
         private double _clickDamageFlat;
@@ -85,6 +85,17 @@ namespace IdleGame.Managers
             if (Instance != null) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            LoadBaseStatsFromConfig();
+        }
+
+        private void LoadBaseStatsFromConfig()
+        {
+            var cfg = Data.GameConfig.Get();
+            _baseClickDamage     = cfg.baseClickDamage;
+            _baseAttackSpeed     = cfg.baseAttackSpeed;
+            _baseAutoDamage      = cfg.baseAutoDamage;
+            _baseAutoAttackSpeed = cfg.baseAutoAttackSpeed;
+            _baseGoldMultiplier  = cfg.baseGoldMultiplier;
         }
 
         private void Start() => StartCoroutine(AutoAttackLoop());

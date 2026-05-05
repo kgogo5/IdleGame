@@ -31,14 +31,16 @@ namespace IdleGame.Managers
         {
             var list = new System.Collections.Generic.List<UpgradeData>();
 
+            var cfg = Data.GameConfig.Get();
+
             UpgradeData Make(string uname, string desc, double cost, float mul, int max, StatType stat, double eff, int unlock = 1)
             {
                 var d = ScriptableObject.CreateInstance<UpgradeData>();
                 d.name = uname;
                 d.upgradeName = uname;
                 d.description = desc;
-                d.baseCost = cost;
-                d.costMultiplier = mul;
+                d.baseCost       = cost * cfg.upgradeCostMultiplier;           // 전역 비용 배율
+                d.costMultiplier = 1f + (mul - 1f) * cfg.upgradeScalingMultiplier; // 증가 지수 배율
                 d.maxLevel = max;
                 d.statType = stat;
                 d.effectPerLevel = eff;

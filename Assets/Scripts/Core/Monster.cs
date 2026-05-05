@@ -62,7 +62,7 @@ namespace IdleGame.Core
             if (_isDead) return;
 
             double actualDamage = System.Math.Min(damage, _currentHealth);
-            CurrencyManager.Instance.AddGold(_goldReward * (actualDamage / _maxHealth) * 0.05);
+            CurrencyManager.Instance.AddGold(_goldReward * (actualDamage / _maxHealth) * Data.GameConfig.Get().goldOnHitRatio);
 
             _currentHealth = System.Math.Max(0, _currentHealth - damage);
             OnHealthChanged?.Invoke(_currentHealth, _maxHealth);

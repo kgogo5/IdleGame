@@ -20,7 +20,6 @@ namespace IdleGame.Core
         [Header("기본 보스 (StageConfig.bossMonster가 없을 때 사용)")]
         [SerializeField] private MonsterData _defaultBossData;
 
-        private const float BOSS_SPAWN_CHANCE = 0.03f; // 3% 확률로 보스 등장
         private bool _forceNormal = false;
 
         private MonsterData _fallbackBossData; // Inspector에 보스가 없을 때 코드 폴백
@@ -53,22 +52,23 @@ namespace IdleGame.Core
         // Inspector에 보스 에셋이 없을 때 코드로 임시 생성 (하위 호환)
         private void CreateFallbackBoss()
         {
+            var cfg = Data.GameConfig.Get();
             _fallbackBossData = ScriptableObject.CreateInstance<MonsterData>();
             _fallbackBossData.name        = "드래곤";
             _fallbackBossData.monsterName = "드래곤";
-            _fallbackBossData.maxHealth   = 5000.0;
-            _fallbackBossData.goldReward  = 500.0;
+            _fallbackBossData.maxHealth   = cfg.fallbackBossMaxHealth;
+            _fallbackBossData.goldReward  = cfg.bossGoldPerStage;
             _fallbackBossData.isBoss      = true;
-            _fallbackBossData.regenPerSecond = 30f;
-            _fallbackBossData.sprite      = Resources.Load<Sprite>("Monsters/icedragon");
-            _fallbackBossData.tintColor   = new Color(0.9f, 0.2f, 0.1f);
-            _fallbackBossData.damageFlashColor = new Color(1f, 0.5f, 0f);
-            _fallbackBossData.spriteSize  = new Vector2(2f, 2f);
-            _fallbackBossData.dropChance  = 0.8f;
-            _fallbackBossData.normalWeight    = 0f;
-            _fallbackBossData.rareWeight      = 65f;
-            _fallbackBossData.uniqueWeight    = 25f;
-            _fallbackBossData.legendaryWeight = 10f;
+            _fallbackBossData.regenPerSecond    = cfg.fallbackBossRegenPerSecond;
+            _fallbackBossData.sprite            = Resources.Load<Sprite>("Monsters/icedragon");
+            _fallbackBossData.tintColor         = new Color(0.9f, 0.2f, 0.1f);
+            _fallbackBossData.damageFlashColor  = new Color(1f, 0.5f, 0f);
+            _fallbackBossData.spriteSize        = new Vector2(2f, 2f);
+            _fallbackBossData.dropChance        = cfg.fallbackBossDropChance;
+            _fallbackBossData.normalWeight      = 0f;
+            _fallbackBossData.rareWeight        = cfg.fallbackBossRareWeight;
+            _fallbackBossData.uniqueWeight      = cfg.fallbackBossUniqueWeight;
+            _fallbackBossData.legendaryWeight   = cfg.fallbackBossLegendaryWeight;
         }
 
         private MonsterData GetBossData()
@@ -186,7 +186,7 @@ namespace IdleGame.Core
                 return;
             }
 
-            float bossChance = BOSS_SPAWN_CHANCE + (float)(PlayerStats.Instance?.BossSpawnRateBonus ?? 0);
+            float bossChance = Data.GameConfig.Get().bossSpawnChance + (float)(PlayerStats.Instance?.BossSpawnRateBonus ?? 0);
             bool isBossSpawn = !_forceNormal && (UnityEngine.Random.value < bossChance);
             _forceNormal = false;
 
@@ -196,7 +196,7 @@ namespace IdleGame.Core
                 : pool[UnityEngine.Random.Range(0, pool.Length)];
 
             double hp   = isBossSpawn ? bossData.maxHealth : data.maxHealth;
-            double gold = isBossSpawn ? bossData.goldReward * Stage : GetGoldReward(Stage);
+            double gold = isBossSpawn ? Data.GameConfig.Get().bossGoldPerStage * Stage : GetGoldReward(Stage);
 
             Vector3 spawnPos = _spawnPoint != null ? _spawnPoint.position : Vector3.zero;
             GameObject monsterObj = Instantiate(_monsterPrefab, spawnPos, Quaternion.identity);
@@ -207,6 +207,6 @@ namespace IdleGame.Core
             OnMonsterSpawned?.Invoke(monster);
         }
 
-        public static double GetGoldReward(int stage) => 25.0 * stage;
+        public static double GetGoldReward(int stage) => Data.GameConfig.Get().goldPerStage * stage;
     }
 }
