@@ -5,7 +5,7 @@ namespace IdleGame.Data
     [System.Serializable]
     public class DropEntry
     {
-        public string itemId;   // ItemData.name 과 매칭
+        public ItemData item;   // Inspector에서 ItemData 에셋 직접 드래그
         [Range(0, 1000)] public float weight = 10f;
     }
 

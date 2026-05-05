@@ -13,7 +13,9 @@ namespace IdleGame.Managers
 
         [SerializeField] private SetBonusData[] _setBonuses;
 
-        // 모든 아이템은 항상 코드로 생성 (Awake마다 재생성)
+        [Header("추가 아이템 DB (코드 외 에셋으로 추가할 때 여기에 드래그)")]
+        [SerializeField] private ItemData[] _extraItems;
+
         private ItemData[] _shopItems;
 
         private readonly Dictionary<string, int>        _owned      = new();
@@ -32,8 +34,8 @@ namespace IdleGame.Managers
             if (Instance != null) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            // 항상 재생성 — 런타임 ScriptableObject이므로 직렬화 불필요
             CreateDefaultItems();
+            MergeExtraItems();
             if (_setBonuses == null || _setBonuses.Length == 0) CreateDefaultSets();
         }
 
@@ -622,6 +624,22 @@ namespace IdleGame.Managers
                 (StatType.BossSpawnRate, 0.02f)));
 
             _shopItems = list.ToArray();
+        }
+
+        // _extraItems 에셋을 _shopItems에 병합 (name 중복 제외)
+        private void MergeExtraItems()
+        {
+            if (_extraItems == null || _extraItems.Length == 0) return;
+            var existing = new System.Collections.Generic.HashSet<string>();
+            foreach (var item in _shopItems)
+                if (item != null) existing.Add(item.name);
+
+            var merged = new System.Collections.Generic.List<ItemData>(_shopItems);
+            foreach (var item in _extraItems)
+                if (item != null && !existing.Contains(item.name))
+                    merged.Add(item);
+
+            _shopItems = merged.ToArray();
         }
 
         private void CreateDefaultSets()

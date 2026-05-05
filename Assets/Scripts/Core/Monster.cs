@@ -148,10 +148,10 @@ namespace IdleGame.Core
 
             if (_data.customDrops != null)
                 foreach (var entry in _data.customDrops)
-                    if (entry.weight > 0 && !string.IsNullOrEmpty(entry.itemId))
+                    if (entry.weight > 0 && entry.item != null)
                     {
-                        var id = entry.itemId;
-                        pool.Add((entry.weight, () => Managers.InventoryManager.Instance.GiveItem(id)));
+                        var item = entry.item;
+                        pool.Add((entry.weight, () => Managers.InventoryManager.Instance.GiveItem(item.name)));
                     }
 
             if (_data.normalWeight    > 0) pool.Add((_data.normalWeight,    () => Managers.InventoryManager.Instance.GiveRandomItem(Data.ItemRarity.Normal)));

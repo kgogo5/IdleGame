@@ -23,5 +23,8 @@ namespace IdleGame.Data
 
         [Header("몬스터 풀 (비워두면 MonsterManager 기본 풀 사용)")]
         public MonsterData[] monsters;
+
+        [Header("보스 (없으면 MonsterManager 기본 보스 사용)")]
+        public MonsterData bossMonster;
     }
 }

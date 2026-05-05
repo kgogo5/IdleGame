@@ -17,10 +17,13 @@ namespace IdleGame.Core
         [Header("스테이지별 설정 (배경/BGM/몬스터)")]
         [SerializeField] private StageConfig[] _stageConfigs;
 
+        [Header("기본 보스 (StageConfig.bossMonster가 없을 때 사용)")]
+        [SerializeField] private MonsterData _defaultBossData;
+
         private const float BOSS_SPAWN_CHANCE = 0.03f; // 3% 확률로 보스 등장
         private bool _forceNormal = false;
 
-        private MonsterData _bossData;
+        private MonsterData _fallbackBossData; // Inspector에 보스가 없을 때 코드 폴백
 
         public double FleeCost => CurrencyManager.Instance != null
             ? System.Math.Max(1, CurrencyManager.Instance.Gold * 0.3)
@@ -42,27 +45,37 @@ namespace IdleGame.Core
             MaxStageReached = PlayerPrefs.GetInt("maxStageReached", 1);
             Stage = PlayerPrefs.GetInt("currentStage", 1);
             if (Stage > MaxStageReached) Stage = MaxStageReached;
-            CreateBossData();
+
+            if (_defaultBossData == null)
+                CreateFallbackBoss();
         }
 
-        private void CreateBossData()
+        // Inspector에 보스 에셋이 없을 때 코드로 임시 생성 (하위 호환)
+        private void CreateFallbackBoss()
         {
-            _bossData = ScriptableObject.CreateInstance<MonsterData>();
-            _bossData.name        = "드래곤";
-            _bossData.monsterName = "드래곤";
-            _bossData.maxHealth   = 5000.0;
-            _bossData.goldReward  = 500.0;
-            _bossData.isBoss      = true;
-            _bossData.regenPerSecond = 30f;             // 30HP/s — 못 따라가면 못잡음
-            _bossData.sprite      = Resources.Load<Sprite>("Monsters/icedragon");
-            _bossData.tintColor   = new Color(0.9f, 0.2f, 0.1f);    // 붉은 틴트 (아이스드래곤 → 파이어드래곤)
-            _bossData.damageFlashColor = new Color(1f, 0.5f, 0f);
-            _bossData.spriteSize  = new Vector2(2f, 2f);
-            _bossData.dropChance  = 0.8f;               // 보스는 80% 드랍
-            _bossData.normalWeight    = 0f;
-            _bossData.rareWeight      = 65f;
-            _bossData.uniqueWeight    = 25f;
-            _bossData.legendaryWeight = 10f;
+            _fallbackBossData = ScriptableObject.CreateInstance<MonsterData>();
+            _fallbackBossData.name        = "드래곤";
+            _fallbackBossData.monsterName = "드래곤";
+            _fallbackBossData.maxHealth   = 5000.0;
+            _fallbackBossData.goldReward  = 500.0;
+            _fallbackBossData.isBoss      = true;
+            _fallbackBossData.regenPerSecond = 30f;
+            _fallbackBossData.sprite      = Resources.Load<Sprite>("Monsters/icedragon");
+            _fallbackBossData.tintColor   = new Color(0.9f, 0.2f, 0.1f);
+            _fallbackBossData.damageFlashColor = new Color(1f, 0.5f, 0f);
+            _fallbackBossData.spriteSize  = new Vector2(2f, 2f);
+            _fallbackBossData.dropChance  = 0.8f;
+            _fallbackBossData.normalWeight    = 0f;
+            _fallbackBossData.rareWeight      = 65f;
+            _fallbackBossData.uniqueWeight    = 25f;
+            _fallbackBossData.legendaryWeight = 10f;
+        }
+
+        private MonsterData GetBossData()
+        {
+            var cfg = GetConfigForStage(Stage);
+            if (cfg?.bossMonster != null) return cfg.bossMonster;
+            return _defaultBossData != null ? _defaultBossData : _fallbackBossData;
         }
 
         // 현재 스테이지에 해당하는 StageConfig 반환 (없으면 null)
@@ -176,12 +189,14 @@ namespace IdleGame.Core
             float bossChance = BOSS_SPAWN_CHANCE + (float)(PlayerStats.Instance?.BossSpawnRateBonus ?? 0);
             bool isBossSpawn = !_forceNormal && (UnityEngine.Random.value < bossChance);
             _forceNormal = false;
+
+            MonsterData bossData = GetBossData();
             MonsterData data = isBossSpawn
-                ? _bossData
+                ? bossData
                 : pool[UnityEngine.Random.Range(0, pool.Length)];
 
-            double hp   = isBossSpawn ? _bossData.maxHealth : data.maxHealth;
-            double gold = isBossSpawn ? _bossData.goldReward * Stage : GetGoldReward(Stage);
+            double hp   = isBossSpawn ? bossData.maxHealth : data.maxHealth;
+            double gold = isBossSpawn ? bossData.goldReward * Stage : GetGoldReward(Stage);
 
             Vector3 spawnPos = _spawnPoint != null ? _spawnPoint.position : Vector3.zero;
             GameObject monsterObj = Instantiate(_monsterPrefab, spawnPos, Quaternion.identity);
