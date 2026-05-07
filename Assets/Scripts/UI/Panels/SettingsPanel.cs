@@ -6,6 +6,7 @@ using TMPro;
 using IdleGame.Core;
 using IdleGame.Data;
 using IdleGame.Managers;
+using IdleGame.UI;
 
 namespace IdleGame.UI.Panels
 {
@@ -585,12 +586,22 @@ namespace IdleGame.UI.Panels
 
             AddAdminDivider(sc);
 
-            AddAdminLabel(sc, "콘텐츠 관리");
-            AddAdminButton(sc, "스테이지 / 몬스터 관리 열기", new Color(0.30f, 0.18f, 0.45f), () =>
+            AddAdminLabel(sc, "토스트 테스트");
+            AddAdminButton(sc, "아이템 획득 토스트", new Color(0.25f, 0.35f, 0.55f), () =>
             {
-                var canvas = GetComponentInParent<Canvas>();
-                if (canvas != null)
-                    ContentManagerPanel.OpenOrCreate(canvas.transform);
+                var items = InventoryManager.Instance?.ShopItems;
+                if (items == null) return;
+                foreach (var it in items) if (it != null) { ItemToastManager.Instance?.ShowItemToast(it); break; }
+            });
+            AddAdminButton(sc, "자동판매 토스트", new Color(0.38f, 0.20f, 0.48f), () =>
+            {
+                var items = InventoryManager.Instance?.ShopItems;
+                if (items == null) return;
+                foreach (var it in items) if (it != null && it.rarity == ItemRarity.Normal)
+                {
+                    ItemToastManager.Instance?.ShowAutoSellToast(it, it.sellPrice > 0 ? it.sellPrice : 200);
+                    break;
+                }
             });
 
             AddAdminDivider(sc);
@@ -742,7 +753,7 @@ namespace IdleGame.UI.Panels
         private void OnJewelAdd()
             => CurrencyManager.Instance?.AddJewel(100);
         private void OnGiveRandomItem()
-            => InventoryManager.Instance?.GiveRandomItem(_selectedRarity);
+            => InventoryManager.Instance?.GiveRandomItem(_selectedRarity, ignoreStage: true);
 
         private void AddAdminLabel(Transform p, string text)
         {

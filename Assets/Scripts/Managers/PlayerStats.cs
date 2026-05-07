@@ -32,6 +32,8 @@ namespace IdleGame.Managers
         private double _goldMultiplierPct;
         private double _dropRatePct;
         private double _bossSpawnRatePct;
+        private double _autoSellNormalFlat;
+        private double _autoSellRareFlat;
         private double _devMultiplier = 1.0;
 
         public double ClickDamage => Math.Max(0, (_baseClickDamage + _clickDamageFlat) * (1 + _clickDamagePct));
@@ -47,9 +49,11 @@ namespace IdleGame.Managers
         public float  ClickCooldown      => (float)(1.0 / AttackSpeed);
         public float  AutoAttackInterval => (float)(1.0 / AutoAttackSpeed);
 
-        public double DropRateMultiplier => (1.0 + _dropRatePct) * _devMultiplier;
-        public double BossSpawnRateBonus => _bossSpawnRatePct;
-        public double DevMultiplier      => _devMultiplier;
+        public double DropRateMultiplier    => (1.0 + _dropRatePct) * _devMultiplier;
+        public double BossSpawnRateBonus    => _bossSpawnRatePct;
+        public double DevMultiplier         => _devMultiplier;
+        public bool   AutoSellNormalUnlocked => _autoSellNormalFlat >= 1.0;
+        public bool   AutoSellRareUnlocked   => _autoSellRareFlat   >= 1.0;
 
         // 전투력: 클릭DPS + 자동DPS
         public double CombatPower => ClickDamage * AttackSpeed + AutoDamage * AutoAttackSpeed;
@@ -109,6 +113,8 @@ namespace IdleGame.Managers
                 case StatType.AutoDamage:      _autoDamageFlat      += amount; break;
                 case StatType.AutoAttackSpeed: _autoAttackSpeedFlat += amount; break;
                 case StatType.GoldMultiplier:  _goldMultiplierFlat  += amount; break;
+                case StatType.AutoSellNormal:  _autoSellNormalFlat  += amount; break;
+                case StatType.AutoSellRare:    _autoSellRareFlat    += amount; break;
             }
             OnStatsChanged?.Invoke();
         }
@@ -148,6 +154,7 @@ namespace IdleGame.Managers
             _clickDamageFlat = _attackSpeedFlat = _autoDamageFlat = _autoAttackSpeedFlat = _goldMultiplierFlat = 0;
             _clickDamagePct  = _attackSpeedPct  = _autoDamagePct  = _autoAttackSpeedPct  = _goldMultiplierPct  = 0;
             _dropRatePct = _bossSpawnRatePct = 0;
+            _autoSellNormalFlat = _autoSellRareFlat = 0;
             OnStatsChanged?.Invoke();
         }
 

@@ -11,6 +11,8 @@ namespace IdleGame.Managers
         public float SfxVolume          { get; private set; }
         public bool  VibrationEnabled   { get; private set; }
         public bool  NotificationEnabled{ get; private set; }
+        public bool  AutoSellNormal     { get; private set; }
+        public bool  AutoSellRare       { get; private set; }
 
         public event Action<float> OnBgmVolumeChanged;
         public event Action<float> OnSfxVolumeChanged;
@@ -31,6 +33,8 @@ namespace IdleGame.Managers
             SfxVolume          = PlayerPrefs.GetFloat("set_sfx_vol",  0.8f);
             VibrationEnabled   = PlayerPrefs.GetInt("set_vibration",  1) == 1;
             NotificationEnabled= PlayerPrefs.GetInt("set_notification",1) == 1;
+            AutoSellNormal     = PlayerPrefs.GetInt("set_autosell_normal", 0) == 1;
+            AutoSellRare       = PlayerPrefs.GetInt("set_autosell_rare",   0) == 1;
         }
 
         private void Save()
@@ -39,6 +43,8 @@ namespace IdleGame.Managers
             PlayerPrefs.SetFloat("set_sfx_vol",      SfxVolume);
             PlayerPrefs.SetInt("set_vibration",       VibrationEnabled   ? 1 : 0);
             PlayerPrefs.SetInt("set_notification",    NotificationEnabled ? 1 : 0);
+            PlayerPrefs.SetInt("set_autosell_normal", AutoSellNormal ? 1 : 0);
+            PlayerPrefs.SetInt("set_autosell_rare",   AutoSellRare   ? 1 : 0);
             PlayerPrefs.Save();
         }
 
@@ -69,5 +75,8 @@ namespace IdleGame.Managers
             OnNotificationChanged?.Invoke(value);
             Save();
         }
+
+        public void SetAutoSellNormal(bool value) { AutoSellNormal = value; Save(); }
+        public void SetAutoSellRare(bool value)   { AutoSellRare   = value; Save(); }
     }
 }

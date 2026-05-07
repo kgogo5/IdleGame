@@ -50,8 +50,85 @@ namespace IdleGame.Core
             Stage = PlayerPrefs.GetInt("currentStage", 1);
             if (Stage > MaxStageReached) Stage = MaxStageReached;
 
-            if (_defaultBossData == null)
+            CreateDefaultContent();
+            if (_defaultBossData == null && _fallbackBossData == null)
                 CreateFallbackBoss();
+        }
+
+        // Inspector 배열이 비어있을 때 스테이지별 기본 몬스터/보스 풀 생성
+        private void CreateDefaultContent()
+        {
+            bool hasStages  = _stageConfigs   != null && _stageConfigs.Length   > 0;
+            bool hasPool    = _monsterDataList != null && _monsterDataList.Length > 0;
+            if (hasStages && hasPool) return;
+
+            var slime  = Resources.Load<Sprite>("Monsters/slime");
+            var dragon = Resources.Load<Sprite>("Monsters/icedragon");
+
+            MonsterData MakeMon(string mname, double hp, double gold, Color tint, Sprite spr,
+                                bool isBoss = false, float dropChance = 0.3f,
+                                float regen = 0f, Vector2? size = null)
+            {
+                var d = ScriptableObject.CreateInstance<MonsterData>();
+                d.name = mname; d.monsterName = mname;
+                d.maxHealth = hp; d.goldReward = gold;
+                d.tintColor = tint; d.sprite = spr;
+                d.isBoss = isBoss; d.dropChance = dropChance;
+                d.regenPerSecond = regen;
+                d.spriteSize = size ?? Vector2.one;
+                if (isBoss) { d.normalWeight = 0f;  d.rareWeight = 60f; d.uniqueWeight = 30f; d.legendaryWeight = 10f; }
+                else        { d.normalWeight = 70f; d.rareWeight = 25f; d.uniqueWeight =  4f; d.legendaryWeight =  1f; }
+                return d;
+            }
+
+            StageConfig MakeStage(int from, int to, MonsterData[] mons, MonsterData boss, string bg = "")
+            {
+                var s = ScriptableObject.CreateInstance<StageConfig>();
+                s.stageFrom = from; s.stageTo = to;
+                s.monsters = mons; s.bossMonster = boss;
+                s.backgroundPath = bg;
+                return s;
+            }
+
+            // ── Stage 1-3: 슬라임 계열 ────────────────────────────────────
+            var s1_green  = MakeMon("초록 슬라임",    80,   25, new Color(0.3f, 0.9f, 0.3f), slime);
+            var s1_blue   = MakeMon("파란 슬라임",   120,   35, new Color(0.3f, 0.5f, 1.0f), slime);
+            var s1_purple = MakeMon("보라 슬라임",   160,   45, new Color(0.7f, 0.2f, 0.9f), slime);
+            var b1        = MakeMon("슬라임 왕",    1200,  500, new Color(1.0f, 0.7f, 0.0f), slime,
+                                    isBoss: true, dropChance: 0.7f, regen: 5f, size: new Vector2(1.8f, 1.8f));
+
+            // ── Stage 4-6: 오크 계열 ─────────────────────────────────────
+            var s2_war    = MakeMon("오크 전사",     400,   80, new Color(0.4f, 0.7f, 0.2f), slime);
+            var s2_arch   = MakeMon("오크 궁수",     500,  100, new Color(0.3f, 0.5f, 0.1f), slime);
+            var s2_sha    = MakeMon("오크 주술사",   600,  120, new Color(0.5f, 0.2f, 0.6f), slime, regen: 3f);
+            var b2        = MakeMon("오크 족장",    4000, 1500, new Color(0.6f, 0.3f, 0.0f), slime,
+                                    isBoss: true, dropChance: 0.8f, regen: 15f, size: new Vector2(1.8f, 1.8f));
+
+            // ── Stage 7-9: 골렘 계열 ─────────────────────────────────────
+            var s3_stone  = MakeMon("돌 골렘",      1500,  200, new Color(0.6f, 0.6f, 0.6f), slime, regen: 5f);
+            var s3_iron   = MakeMon("철 골렘",      2000,  260, new Color(0.4f, 0.4f, 0.5f), slime, regen: 8f);
+            var s3_lava   = MakeMon("용암 골렘",    2500,  320, new Color(0.9f, 0.4f, 0.1f), slime, regen: 10f);
+            var b3        = MakeMon("골렘 군주",   18000, 4000, new Color(0.8f, 0.2f, 0.1f), slime,
+                                    isBoss: true, dropChance: 0.9f, regen: 40f, size: new Vector2(2.0f, 2.0f));
+
+            // ── Stage 10+: 드래곤 계열 ───────────────────────────────────
+            var s4_wyv    = MakeMon("와이번",        6000,  500, new Color(0.2f, 0.6f, 0.9f), dragon ?? slime, regen: 10f);
+            var s4_fire   = MakeMon("화염 드래곤",   9000,  700, new Color(1.0f, 0.3f, 0.1f), dragon ?? slime, regen: 15f);
+            var s4_ice    = MakeMon("얼음 드래곤",  12000,  900, new Color(0.5f, 0.8f, 1.0f), dragon ?? slime, regen: 20f);
+            var b4        = MakeMon("드래곤 군주",  80000,12000, new Color(0.9f, 0.1f, 0.5f), dragon ?? slime,
+                                    isBoss: true, dropChance: 1.0f, regen: 120f, size: new Vector2(2.2f, 2.2f));
+
+            _stageConfigs = new[]
+            {
+                MakeStage( 1,  3, new[] { s1_green, s1_blue, s1_purple }, b1, "Backgrounds/stage1_bg"),
+                MakeStage( 4,  6, new[] { s2_war,  s2_arch,  s2_sha   }, b2, "Backgrounds/stage2_bg"),
+                MakeStage( 7,  9, new[] { s3_stone, s3_iron, s3_lava  }, b3, "Backgrounds/stage3_bg"),
+                MakeStage(10, 99, new[] { s4_wyv,  s4_fire,  s4_ice   }, b4),
+            };
+
+            // Inspector 기본 풀이 비어있으면 1구간 몬스터를 폴백으로 사용
+            if (!hasPool)
+                _monsterDataList = new[] { s1_green, s1_blue, s1_purple };
         }
 
         // Inspector에 보스 에셋이 없을 때 코드로 임시 생성 (하위 호환)

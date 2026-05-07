@@ -28,6 +28,7 @@ namespace IdleGame.Managers
         public event Action OnInventoryChanged;
         public event Action OnEquipChanged;
         public event Action<ItemData> OnItemAcquired;
+        public event Action<ItemData, double> OnItemAutoSold;
 
         private void Awake()
         {
@@ -59,20 +60,6 @@ namespace IdleGame.Managers
                 d.sellPrice = buy > 0 ? System.Math.Round(buy * 0.3) : (sell < 0 ? 0 : sell);
                 d.isStackable = false; d.rarity = rarity; d.slot = slot; d.setId = setId;
                 d.modifiers = mods.Select(m => new StatModifier { statType = m.t, percent = m.p }).ToArray();
-                return d;
-            }
-
-            // 소모품 — sell < 0이면 buy의 30% 자동 계산
-            ItemData Consumable(string id, string displayName, double buy, double sell,
-                                ItemRarity rarity, params (StatType t, float p)[] mods)
-            {
-                var d = ScriptableObject.CreateInstance<ItemData>();
-                d.name = id; d.itemName = displayName;
-                d.buyPrice  = buy;
-                d.sellPrice = buy > 0 ? System.Math.Round(buy * 0.3) : (sell < 0 ? 0 : sell);
-                d.isStackable = true; d.rarity = rarity;
-                d.modifiers = mods.Select(m => new StatModifier { statType = m.t, percent = m.p }).ToArray();
-                d.description = string.Join(", ", d.modifiers.Select(m => m.ToDisplayString()));
                 return d;
             }
 
@@ -592,27 +579,37 @@ namespace IdleGame.Managers
             레전4_목걸이.minDropStage = 12;
             list.Add(레전4_목걸이);
 
-            // ── 소모품 (드랍 전용 — 상점 미판매) ──
-            // Rare: 스택당 +4~6% (10개 쌓아도 +40~60%)
-            list.Add(Consumable("소모_자동소", "자동 장치",
-                0, 300, ItemRarity.Rare, (StatType.AutoDamage, 0.04f)));
+            // ── 부적 (드랍 전용, Talisman 슬롯 — 하나씩만 장착 가능) ──
+            list.Add(Equip("소모_자동소", "자동 장치 부적",
+                "+8% 자동공격 데미지",
+                0, 300, ItemRarity.Rare, EquipSlot.Talisman, "",
+                (StatType.AutoDamage, 0.08f)));
 
-            list.Add(Consumable("소모_자동대", "자동 포탑",
-                0, 800, ItemRarity.Rare, (StatType.AutoDamage, 0.10f)));
+            list.Add(Equip("소모_자동대", "자동 포탑 부적",
+                "+15% 자동공격 데미지",
+                0, 800, ItemRarity.Rare, EquipSlot.Talisman, "",
+                (StatType.AutoDamage, 0.15f)));
 
-            list.Add(Consumable("소모_골드", "황금 코인",
-                0, 300, ItemRarity.Rare, (StatType.GoldMultiplier, 0.04f)));
+            list.Add(Equip("소모_골드", "황금 부적",
+                "+10% 골드 배율",
+                0, 300, ItemRarity.Rare, EquipSlot.Talisman, "",
+                (StatType.GoldMultiplier, 0.10f)));
 
-            list.Add(Consumable("소모_클릭", "클릭 부적",
-                0, 400, ItemRarity.Rare, (StatType.ClickDamage, 0.05f)));
+            list.Add(Equip("소모_클릭", "클릭 부적",
+                "+10% 클릭 데미지",
+                0, 400, ItemRarity.Rare, EquipSlot.Talisman, "",
+                (StatType.ClickDamage, 0.10f)));
 
-            list.Add(Consumable("소모_공속", "신속의 룬",
-                0, 500, ItemRarity.Rare, (StatType.AttackSpeed, 0.05f)));
+            list.Add(Equip("소모_공속", "신속의 부적",
+                "+10% 공격속도",
+                0, 500, ItemRarity.Rare, EquipSlot.Talisman, "",
+                (StatType.AttackSpeed, 0.10f)));
 
-            list.Add(Consumable("소모_자동공속", "연사의 태엽",
-                0, 500, ItemRarity.Rare, (StatType.AutoAttackSpeed, 0.06f)));
+            list.Add(Equip("소모_자동공속", "연사의 부적",
+                "+10% 자동공격속도",
+                0, 500, ItemRarity.Rare, EquipSlot.Talisman, "",
+                (StatType.AutoAttackSpeed, 0.10f)));
 
-            // Unique: 부적 (장착 슬롯 — 장착 시에만 효과 적용)
             list.Add(Equip("소모_드랍부적", "드랍 부적",
                 "+15% 드랍률",
                 0, 1_500, ItemRarity.Unique, EquipSlot.Talisman, "",
@@ -984,12 +981,29 @@ namespace IdleGame.Managers
             OnInventoryChanged?.Invoke();
         }
 
+        // 드랍 등급이 자동 판매 설정에 해당하면 골드로 전환하고 true 반환
+        private bool TryAutoSell(ItemData item)
+        {
+            if (item == null) return false;
+            var ps = PlayerStats.Instance;
+            var s  = SettingsManager.Instance;
+            if (ps == null || s == null) return false;
+            bool sell = (item.rarity == ItemRarity.Normal && ps.AutoSellNormalUnlocked && s.AutoSellNormal) ||
+                        (item.rarity == ItemRarity.Rare   && ps.AutoSellRareUnlocked   && s.AutoSellRare);
+            if (!sell) return false;
+            double gold = item.sellPrice > 0 ? item.sellPrice : 1;
+            CurrencyManager.Instance?.AddGold(gold);
+            OnItemAutoSold?.Invoke(item, gold);
+            return true;
+        }
+
         // 특정 아이템 ID로 직접 지급
         public void GiveItem(string itemId)
         {
             var item = FindItem(itemId);
             if (item == null) return;
             if (!item.isStackable && IsOwned(item)) return; // 장비 중복 지급 방지
+            if (TryAutoSell(item)) return;
             _owned[item.name] = GetCount(item) + 1;
             if (item.isStackable) ApplyModifiers(item, +1);
             Save();
@@ -1019,6 +1033,7 @@ namespace IdleGame.Managers
                 if (pool.Count == 0) continue;
 
                 var chosen = pool[UnityEngine.Random.Range(0, pool.Count)];
+                if (TryAutoSell(chosen)) return;
                 _owned[chosen.name] = 1;
                 Save();
                 OnInventoryChanged?.Invoke();
@@ -1035,12 +1050,12 @@ namespace IdleGame.Managers
         }
 
         // 특정 등급의 미보유 장비 중 랜덤 1개 지급
-        // 이미 전부 보유 중이면 그 등급 아이템 판매가만큼 골드 지급
-        public void GiveRandomItem(ItemRarity rarity)
+        // ignoreStage=true 이면 minDropStage 제한 무시 (어드민용)
+        public void GiveRandomItem(ItemRarity rarity, bool ignoreStage = false)
         {
             if (_shopItems == null) return;
 
-            int stage = MonsterManager.Instance?.Stage ?? 1;
+            int stage = ignoreStage ? int.MaxValue : (MonsterManager.Instance?.Stage ?? 1);
             var pool = _shopItems
                 .Where(i => i != null && !i.isStackable && i.rarity == rarity
                          && !IsOwned(i) && i.minDropStage <= stage)
@@ -1055,11 +1070,20 @@ namespace IdleGame.Managers
                     .ToList();
                 if (allOfRarity.Count == 0) return;
                 var fallback = allOfRarity[UnityEngine.Random.Range(0, allOfRarity.Count)];
-                CurrencyManager.Instance?.AddGold(fallback.sellPrice);
+                double gold = fallback.sellPrice > 0 ? fallback.sellPrice : 1;
+                CurrencyManager.Instance?.AddGold(gold);
+                // 자동판매 활성화 상태면 토스트 표시
+                var ps2 = PlayerStats.Instance;
+                var s2  = SettingsManager.Instance;
+                bool autoOn = ps2 != null && s2 != null &&
+                    ((rarity == ItemRarity.Normal && ps2.AutoSellNormalUnlocked && s2.AutoSellNormal) ||
+                     (rarity == ItemRarity.Rare   && ps2.AutoSellRareUnlocked   && s2.AutoSellRare));
+                if (autoOn) OnItemAutoSold?.Invoke(fallback, gold);
                 return;
             }
 
             var chosen = pool[UnityEngine.Random.Range(0, pool.Count)];
+            if (TryAutoSell(chosen)) return;
             _owned[chosen.name] = 1;
             Save();
             OnInventoryChanged?.Invoke();

@@ -9,5 +9,7 @@ namespace IdleGame.Data
         GoldMultiplier,   // 골드 획득 배율
         DropRate,         // 아이템 드랍률 배율
         BossSpawnRate,    // 보스 등장 확률 (플랫 추가)
+        AutoSellNormal,   // 흰색 아이템 자동판매 해금 (1이면 해금)
+        AutoSellRare,     // 파란 아이템 자동판매 해금 (1이면 해금)
     }
 }

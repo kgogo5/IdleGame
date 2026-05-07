@@ -31,6 +31,8 @@ namespace IdleGame.UI.Panels
             _built = true;
             ShowTab(true);
             InventoryManager.Instance.OnInventoryChanged += Refresh;
+            if (UpgradeManager.Instance != null)
+                UpgradeManager.Instance.OnUpgradePurchased += Refresh;
         }
 
         private void OnEnable()  { if (_built) Refresh(); }
@@ -38,6 +40,8 @@ namespace IdleGame.UI.Panels
         {
             if (InventoryManager.Instance != null)
                 InventoryManager.Instance.OnInventoryChanged -= Refresh;
+            if (UpgradeManager.Instance != null)
+                UpgradeManager.Instance.OnUpgradePurchased -= Refresh;
         }
 
         private void BuildLayout()
@@ -142,6 +146,16 @@ namespace IdleGame.UI.Panels
 
         private void RefreshSell(ItemData[] items)
         {
+            var ps = PlayerStats.Instance;
+            var sm = SettingsManager.Instance;
+            if (ps != null && sm != null)
+            {
+                if (ps.AutoSellNormalUnlocked) CreateAutoSellToggleRow("흰색 아이템 자동판매", sm.AutoSellNormal,
+                    v => { sm.SetAutoSellNormal(v); Refresh(); });
+                if (ps.AutoSellRareUnlocked)   CreateAutoSellToggleRow("파란 아이템 자동판매",  sm.AutoSellRare,
+                    v => { sm.SetAutoSellRare(v);   Refresh(); });
+            }
+
             bool hasNormal = false;
             foreach (var item in items)
             {
@@ -158,6 +172,30 @@ namespace IdleGame.UI.Panels
                 CreateSellRow(item);
             }
             if (!hasAny) EmptyLabel("판매할 아이템 없음");
+        }
+
+        private void CreateAutoSellToggleRow(string label, bool isOn, System.Action<bool> onToggle)
+        {
+            var row = new GameObject("AutoSell_Row");
+            row.transform.SetParent(_listContent, false);
+            row.AddComponent<RectTransform>().sizeDelta = new Vector2(0, 80);
+            row.AddComponent<Image>().color = new Color(0.10f, 0.14f, 0.20f);
+
+            var lGo = new GameObject("Label");
+            lGo.transform.SetParent(row.transform, false);
+            var lRt = lGo.AddComponent<RectTransform>();
+            lRt.anchorMin = new Vector2(0, 0); lRt.anchorMax = new Vector2(1, 1);
+            lRt.offsetMin = new Vector2(16, 0); lRt.offsetMax = new Vector2(-(BTN_W + 18), 0);
+            var lTmp = lGo.AddComponent<TextMeshProUGUI>();
+            lTmp.text = label; lTmp.fontSize = NAME_F; lTmp.color = Color.white;
+            lTmp.alignment = TextAlignmentOptions.MidlineLeft; lTmp.raycastTarget = false;
+
+            Color onColor  = new Color(0.15f, 0.60f, 0.25f);
+            Color offColor = new Color(0.30f, 0.15f, 0.15f);
+            var btn = UIHelper.MakeButton(row.transform, isOn ? "ON" : "OFF", (int)BTN_F,
+                isOn ? onColor : offColor);
+            SetBtnPos(btn, BTN_W, BTN_H);
+            btn.GetComponent<Button>().onClick.AddListener(() => onToggle(!isOn));
         }
 
         private void CreateSellAllNormalRow(bool hasNormal)

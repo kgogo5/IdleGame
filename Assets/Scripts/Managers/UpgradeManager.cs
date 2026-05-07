@@ -50,7 +50,7 @@ namespace IdleGame.Managers
 
             // ── 스테이지 1: 클릭 공격 + 클릭 공속 ───────────────────────
             list.Add(Make("손가락 단련",  "클릭 데미지 +3 / 레벨",                     200,    1.55f,  0, StatType.ClickDamage,      3,   unlock: 1));
-            list.Add(Make("손놀림 향상",  "클릭 공속 +0.3회/초 / 레벨 (최대 5레벨)",   1_000,  1.72f,  5, StatType.AttackSpeed,      0.3, unlock: 1));
+            list.Add(Make("손놀림 향상",  "클릭 공속 +0.15회/초 / 레벨 (최대 5레벨)", 1_000,  1.72f,  5, StatType.AttackSpeed,      0.15, unlock: 1));
 
             // ── 스테이지 2: 자동 공격 + 자동 공속 ───────────────────────
             list.Add(Make("자동 타격기",  "자동공격 데미지 +3 / 레벨",                  800,    1.58f,  0, StatType.AutoDamage,       3,   unlock: 2));
@@ -69,8 +69,12 @@ namespace IdleGame.Managers
             list.Add(Make("자동 포탑",    "자동공격 데미지 +7 / 레벨",                   50_000, 1.78f,  0, StatType.AutoDamage,       7,   unlock: 5));
 
             // ── 스테이지 6: 최고급 공속 + 골드 ──────────────────────────
-            list.Add(Make("초고속 클릭",  "클릭 공속 +0.8회/초 / 레벨 (최대 8레벨)",   120_000, 1.83f,  8, StatType.AttackSpeed,     0.8,  unlock: 6));
+            list.Add(Make("초고속 클릭",  "클릭 공속 +0.25회/초 / 레벨 (최대 8레벨)", 120_000, 1.83f,  8, StatType.AttackSpeed,     0.25, unlock: 6));
             list.Add(Make("행운의 손",    "골드 배율 +0.05 / 레벨 (최대 8레벨)",        100_000, 1.80f,  8, StatType.GoldMultiplier,  0.05, unlock: 6));
+
+            // ── 스테이지 4·7: 자동판매 해금 (1회 구매) ───────────────────
+            list.Add(Make("자동판매 (일반)", "상점 판매탭에서 흰색 아이템 자동판매 ON/OFF 설정 가능", 30_000, 1f, 1, StatType.AutoSellNormal, 1, unlock: 4));
+            list.Add(Make("자동판매 (레어)", "상점 판매탭에서 파란 아이템 자동판매 ON/OFF 설정 가능", 200_000, 1f, 1, StatType.AutoSellRare,   1, unlock: 7));
 
             _upgrades = list.ToArray();
         }
@@ -148,6 +152,7 @@ namespace IdleGame.Managers
                 _levels[upgrade.name] = level;
                 PlayerStats.Instance.AddBonus(upgrade.statType, upgrade.effectPerLevel * level);
             }
+            OnUpgradePurchased?.Invoke();
         }
     }
 }
