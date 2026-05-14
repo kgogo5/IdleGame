@@ -34,6 +34,8 @@ namespace IdleGame.Managers
         private double _bossSpawnRatePct;
         private double _autoSellNormalFlat;
         private double _autoSellRareFlat;
+        private double _criticalChancePct;  // 장비로 쌓이는 크리티컬 확률 합산
+        private double _criticalDamagePct;  // 장비로 쌓이는 크리티컬 배수 추가량
         private double _devMultiplier = 1.0;
 
         public double ClickDamage => Math.Max(0, (_baseClickDamage + _clickDamageFlat) * (1 + _clickDamagePct));
@@ -55,6 +57,10 @@ namespace IdleGame.Managers
         public bool   AutoSellNormalUnlocked => _autoSellNormalFlat >= 1.0;
         public bool   AutoSellRareUnlocked   => _autoSellRareFlat   >= 1.0;
 
+        // 크리티컬 — 일반 클릭과 무관, 별도 기믹에서 참조
+        public double CriticalChance => Math.Clamp(_criticalChancePct, 0.0, 1.0);
+        public double CriticalDamage => 2.0 + _criticalDamagePct;      // 기본 2배 + 장비 추가
+
         // 전투력: 클릭DPS + 자동DPS
         public double CombatPower => ClickDamage * AttackSpeed + AutoDamage * AutoAttackSpeed;
 
@@ -72,6 +78,8 @@ namespace IdleGame.Managers
         public double EquipAutoAttackSpeedPct => _autoAttackSpeedPct;
         public double EquipGoldMultiplierPct  => _goldMultiplierPct;
         public double EquipDropRatePct        => _dropRatePct;
+        public double EquipCriticalChancePct  => _criticalChancePct;
+        public double EquipCriticalDamagePct  => _criticalDamagePct;
 
         public event Action OnStatsChanged;
 
@@ -132,6 +140,8 @@ namespace IdleGame.Managers
                 case StatType.GoldMultiplier:  _goldMultiplierPct  += percent; break;
                 case StatType.DropRate:        _dropRatePct        += percent; break;
                 case StatType.BossSpawnRate:   _bossSpawnRatePct   += percent; break;
+                case StatType.CriticalChance:  _criticalChancePct  += percent; break;
+                case StatType.CriticalDamage:  _criticalDamagePct  += percent; break;
             }
             OnStatsChanged?.Invoke();
         }
@@ -140,6 +150,7 @@ namespace IdleGame.Managers
         {
             _clickDamagePct = _attackSpeedPct = _autoDamagePct = _autoAttackSpeedPct = _goldMultiplierPct = 0;
             _dropRatePct = _bossSpawnRatePct = 0;
+            _criticalChancePct = _criticalDamagePct = 0;
             OnStatsChanged?.Invoke();
         }
 
@@ -155,6 +166,7 @@ namespace IdleGame.Managers
             _clickDamagePct  = _attackSpeedPct  = _autoDamagePct  = _autoAttackSpeedPct  = _goldMultiplierPct  = 0;
             _dropRatePct = _bossSpawnRatePct = 0;
             _autoSellNormalFlat = _autoSellRareFlat = 0;
+            _criticalChancePct = _criticalDamagePct = 0;
             OnStatsChanged?.Invoke();
         }
 

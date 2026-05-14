@@ -18,9 +18,10 @@ namespace IdleGame.Managers
 
         private ItemData[] _shopItems;
 
-        private readonly Dictionary<string, int>        _owned      = new();
+        private readonly Dictionary<string, int>        _owned        = new();
         private readonly Dictionary<EquipSlot, ItemData> _equipped   = new();
         private readonly List<StatModifier[]>            _activeSets = new();
+        private readonly HashSet<string>                 _everObtained = new();
 
         public ItemData[]     ShopItems  => _shopItems;
         public SetBonusData[] SetBonuses => _setBonuses;
@@ -760,8 +761,10 @@ namespace IdleGame.Managers
 
         // ── 조회 ─────────────────────────────────────────────────────────────────
 
-        public int  GetCount(ItemData item)   => _owned.TryGetValue(item.name, out int c) ? c : 0;
+        public int  GetCount(ItemData item)    => _owned.TryGetValue(item.name, out int c) ? c : 0;
         public bool IsOwned(ItemData item)    => GetCount(item) > 0;
+        public bool HasEverObtained(ItemData item) => item != null && _everObtained.Contains(item.name);
+        public int  EverObtainedCount         => _everObtained.Count;
         public bool IsEquipped(ItemData item) =>
             item != null && !item.isStackable &&
             _equipped.TryGetValue(item.slot, out var eq) && eq.name == item.name;
@@ -815,6 +818,7 @@ namespace IdleGame.Managers
             if (!CanBuy(item)) return false;
             if (!CurrencyManager.Instance.SpendGold(item.buyPrice)) return false;
 
+            _everObtained.Add(item.name);
             _owned[item.name] = GetCount(item) + 1;
             ApplyModifiers(item, +1);
 
@@ -962,7 +966,8 @@ namespace IdleGame.Managers
                 foreach (var mod in bonuses)
                     PlayerStats.Instance.AddEquipModifier(mod.statType, -mod.percent);
 
-            _owned.Clear(); _equipped.Clear(); _activeSets.Clear();
+            _owned.Clear(); _equipped.Clear(); _activeSets.Clear(); _everObtained.Clear();
+            PlayerPrefs.DeleteKey("ever_obtained");
             OnInventoryChanged?.Invoke();
             OnEquipChanged?.Invoke();
         }
@@ -972,6 +977,7 @@ namespace IdleGame.Managers
             if (_shopItems == null) return;
             foreach (var item in _shopItems)
             {
+                _everObtained.Add(item.name);
                 if (IsOwned(item)) continue;
                 _owned[item.name] = 1;
                 if (!item.isStackable) Equip(item);
@@ -1003,7 +1009,8 @@ namespace IdleGame.Managers
             var item = FindItem(itemId);
             if (item == null) return;
             if (!item.isStackable && IsOwned(item)) return; // 장비 중복 지급 방지
-            if (TryAutoSell(item)) return;
+            _everObtained.Add(item.name);
+            if (TryAutoSell(item)) { Save(); return; }
             _owned[item.name] = GetCount(item) + 1;
             if (item.isStackable) ApplyModifiers(item, +1);
             Save();
@@ -1033,7 +1040,8 @@ namespace IdleGame.Managers
                 if (pool.Count == 0) continue;
 
                 var chosen = pool[UnityEngine.Random.Range(0, pool.Count)];
-                if (TryAutoSell(chosen)) return;
+                _everObtained.Add(chosen.name);
+                if (TryAutoSell(chosen)) { Save(); return; }
                 _owned[chosen.name] = 1;
                 Save();
                 OnInventoryChanged?.Invoke();
@@ -1083,7 +1091,8 @@ namespace IdleGame.Managers
             }
 
             var chosen = pool[UnityEngine.Random.Range(0, pool.Count)];
-            if (TryAutoSell(chosen)) return;
+            _everObtained.Add(chosen.name);
+            if (TryAutoSell(chosen)) { Save(); return; }
             _owned[chosen.name] = 1;
             Save();
             OnInventoryChanged?.Invoke();
@@ -1096,10 +1105,10 @@ namespace IdleGame.Managers
         {
             foreach (var kv in _owned)
                 PlayerPrefs.SetInt($"inv_{kv.Key}", kv.Value);
-            // "slot:itemId" 쌍으로 직렬화
             var parts = new List<string>();
             foreach (var kv in _equipped) parts.Add($"{(int)kv.Key}:{kv.Value.name}");
             PlayerPrefs.SetString("equipped_slots", string.Join(",", parts));
+            PlayerPrefs.SetString("ever_obtained", string.Join(",", _everObtained));
             PlayerPrefs.Save();
         }
 
@@ -1144,6 +1153,11 @@ namespace IdleGame.Managers
             }
 
             RecalculateSetBonuses();
+
+            string everStr = PlayerPrefs.GetString("ever_obtained", "");
+            if (!string.IsNullOrEmpty(everStr))
+                foreach (var id in everStr.Split(','))
+                    if (!string.IsNullOrEmpty(id)) _everObtained.Add(id);
         }
 
         private ItemData FindItem(string id) =>

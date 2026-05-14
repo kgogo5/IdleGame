@@ -7,8 +7,8 @@ namespace IdleGame.UI
 {
     public class NavigationController : MonoBehaviour
     {
-        // 탭 순서: 업그레이드 / 장비 / 전투(가운데) / 상점 / 업적
-        private static readonly string[] TAB_NAMES = { "업그레이드", "장비", "전투", "상점", "업적" };
+        // 탭 순서: 업그레이드 / 장비 / 전투(가운데) / 상점 / 도감
+        private static readonly string[] TAB_NAMES = { "업그레이드", "장비", "전투", "상점", "도감" };
         private const int BATTLE_TAB = 2;
 
         public static event Action<int> OnTabChanged;

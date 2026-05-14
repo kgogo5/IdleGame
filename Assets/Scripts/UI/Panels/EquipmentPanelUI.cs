@@ -21,6 +21,20 @@ namespace IdleGame.UI.Panels
         private TextMeshProUGUI _statC1, _statC2, _statC3;
         private bool _built;
 
+        private EquipSlot? _activeSlotFilter = null;
+        private GameObject _filterDropdown;
+        private Image[]    _filterBtnImages;
+        private TextMeshProUGUI _filterToggleLabel;
+
+        private static readonly EquipSlot?[] FILTER_SLOTS =
+        {
+            null,
+            EquipSlot.Weapon, EquipSlot.Helmet, EquipSlot.Armor, EquipSlot.Gloves,
+            EquipSlot.Ring,   EquipSlot.Amulet, EquipSlot.Talisman,
+        };
+        private static readonly string[] FILTER_LABELS =
+        { "전체", "무기", "투구", "갑옷", "장갑", "반지", "목걸이", "부적" };
+
         private void Start()
         {
             UIHelper.MakeText(transform, "장비", 42, TextAnchor.UpperLeft,
@@ -79,6 +93,117 @@ namespace IdleGame.UI.Panels
             _statC2 = MakeColTmp(colsRow.transform);
             _statC3 = MakeColTmp(colsRow.transform);
 
+            // 필터 버튼 (레이아웃 내, 항상 표시)
+            var toggleRow = new GameObject("FilterToggle");
+            toggleRow.transform.SetParent(body.transform, false);
+            toggleRow.AddComponent<LayoutElement>().preferredHeight = 44;
+            var toggleImg = toggleRow.AddComponent<Image>();
+            toggleImg.color = new Color(0.16f, 0.18f, 0.24f);
+            var toggleBtn = toggleRow.AddComponent<Button>();
+            toggleBtn.targetGraphic = toggleImg;
+
+            var tLabelGo = new GameObject("Label");
+            tLabelGo.transform.SetParent(toggleRow.transform, false);
+            var tLabelRt = tLabelGo.AddComponent<RectTransform>();
+            tLabelRt.anchorMin = Vector2.zero; tLabelRt.anchorMax = Vector2.one;
+            tLabelRt.offsetMin = new Vector2(14, 0); tLabelRt.offsetMax = new Vector2(-14, 0);
+            _filterToggleLabel = tLabelGo.AddComponent<TextMeshProUGUI>();
+            _filterToggleLabel.fontSize  = 22;
+            _filterToggleLabel.color     = new Color(0.78f, 0.82f, 0.95f);
+            _filterToggleLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            _filterToggleLabel.raycastTarget = false;
+            UpdateFilterToggleLabel();
+
+            // 모달 오버레이 — 패널 루트에 직접 부착, 항상 최상위 렌더
+            _filterDropdown = new GameObject("FilterModal");
+            _filterDropdown.transform.SetParent(transform, false);
+            var overlayRt = _filterDropdown.AddComponent<RectTransform>();
+            overlayRt.anchorMin = Vector2.zero; overlayRt.anchorMax = Vector2.one;
+            overlayRt.offsetMin = overlayRt.offsetMax = Vector2.zero;
+            var overlayImg = _filterDropdown.AddComponent<Image>();
+            overlayImg.color = new Color(0, 0, 0, 0.55f);
+            var overlayBtn = _filterDropdown.AddComponent<Button>();
+            overlayBtn.targetGraphic = overlayImg;
+            overlayBtn.onClick.AddListener(() => _filterDropdown.SetActive(false));
+
+            // 카드 (오버레이 중앙)
+            var card = new GameObject("Card");
+            card.transform.SetParent(_filterDropdown.transform, false);
+            var cardRt = card.AddComponent<RectTransform>();
+            cardRt.anchorMin = new Vector2(0.5f, 0.5f); cardRt.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRt.pivot     = new Vector2(0.5f, 0.5f);
+            cardRt.sizeDelta = new Vector2(340, 280);
+            card.AddComponent<Image>().color = new Color(0.13f, 0.15f, 0.20f, 0.98f);
+
+            // 카드 제목
+            var cardTitle = new GameObject("Title");
+            cardTitle.transform.SetParent(card.transform, false);
+            var cardTitleRt = cardTitle.AddComponent<RectTransform>();
+            cardTitleRt.anchorMin = new Vector2(0, 1); cardTitleRt.anchorMax = new Vector2(1, 1);
+            cardTitleRt.offsetMin = new Vector2(0, -52); cardTitleRt.offsetMax = Vector2.zero;
+            var cardTitleTmp = cardTitle.AddComponent<TextMeshProUGUI>();
+            cardTitleTmp.text      = "슬롯 필터";
+            cardTitleTmp.fontSize  = 28;
+            cardTitleTmp.fontStyle = FontStyles.Bold;
+            cardTitleTmp.color     = UITheme.TxtHeading;
+            cardTitleTmp.alignment = TextAlignmentOptions.Center;
+            cardTitleTmp.raycastTarget = false;
+
+            // 버튼 그리드 (4×2)
+            var grid = new GameObject("Grid");
+            grid.transform.SetParent(card.transform, false);
+            var gridRt = grid.AddComponent<RectTransform>();
+            gridRt.anchorMin = new Vector2(0, 0); gridRt.anchorMax = new Vector2(1, 1);
+            gridRt.offsetMin = new Vector2(12, 12); gridRt.offsetMax = new Vector2(-12, -56);
+            var glg = grid.AddComponent<GridLayoutGroup>();
+            glg.cellSize        = new Vector2(72, 80);
+            glg.spacing         = new Vector2(8, 8);
+            glg.startCorner     = GridLayoutGroup.Corner.UpperLeft;
+            glg.startAxis       = GridLayoutGroup.Axis.Horizontal;
+            glg.childAlignment  = TextAnchor.MiddleCenter;
+            glg.constraint      = GridLayoutGroup.Constraint.FixedColumnCount;
+            glg.constraintCount = 4;
+
+            _filterBtnImages = new Image[FILTER_LABELS.Length];
+            for (int i = 0; i < FILTER_LABELS.Length; i++)
+            {
+                int idx = i;
+                var btnGo = new GameObject(FILTER_LABELS[i]);
+                btnGo.transform.SetParent(grid.transform, false);
+                var img = btnGo.AddComponent<Image>();
+                img.color = GetFilterBtnColor(FILTER_SLOTS[i] == _activeSlotFilter);
+                _filterBtnImages[i] = img;
+                var btn = btnGo.AddComponent<Button>();
+                btn.targetGraphic = img;
+                btn.onClick.AddListener(() =>
+                {
+                    _activeSlotFilter = FILTER_SLOTS[idx];
+                    _filterDropdown.SetActive(false);
+                    UpdateFilterToggleLabel();
+                    UpdateFilterColors();
+                    Refresh();
+                });
+                var tGo = new GameObject("L");
+                tGo.transform.SetParent(btnGo.transform, false);
+                var tRt = tGo.AddComponent<RectTransform>();
+                tRt.anchorMin = Vector2.zero; tRt.anchorMax = Vector2.one;
+                tRt.offsetMin = tRt.offsetMax = Vector2.zero;
+                var tmp = tGo.AddComponent<TextMeshProUGUI>();
+                tmp.text      = FILTER_LABELS[i];
+                tmp.fontSize  = 21;
+                tmp.color     = Color.white;
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.raycastTarget = false;
+            }
+            _filterDropdown.SetActive(false);
+            _filterDropdown.transform.SetAsLastSibling(); // 항상 최상위
+
+            toggleBtn.onClick.AddListener(() =>
+            {
+                _filterDropdown.SetActive(true);
+                _filterDropdown.transform.SetAsLastSibling();
+            });
+
             var scrollGo = UIHelper.MakeScrollView(body.transform, out _listContent);
             var scrollLe = scrollGo.AddComponent<LayoutElement>();
             scrollLe.minHeight = 100;
@@ -126,11 +251,13 @@ namespace IdleGame.UI.Panels
 
             _statC1.text =
                 $"클릭 데미지\n{UITheme.StatVal(NumberFormatter.Format(ps.ClickDamage))} <size=18>{UITheme.EquipPct(ps.EquipClickDamagePct)}</size>\n\n" +
-                $"자동공격\n{UITheme.StatVal(NumberFormatter.Format(ps.AutoDamage))} <size=18>{UITheme.EquipPct(ps.EquipAutoDamagePct)}</size>";
+                $"자동공격\n{UITheme.StatVal(NumberFormatter.Format(ps.AutoDamage))} <size=18>{UITheme.EquipPct(ps.EquipAutoDamagePct)}</size>\n\n" +
+                $"크리티컬 확률\n{UITheme.StatVal($"{ps.CriticalChance * 100:F1}%")} <size=18>{UITheme.EquipPct(ps.EquipCriticalChancePct)}</size>";
 
             _statC2.text =
                 $"공격속도\n{UITheme.StatVal($"{ps.AttackSpeed:F2}/s")} <size=18>{UITheme.EquipPct(ps.EquipAttackSpeedPct)}</size>\n\n" +
-                $"자동속도\n{UITheme.StatVal($"{ps.AutoAttackSpeed:F2}/s")} <size=18>{UITheme.EquipPct(ps.EquipAutoAttackSpeedPct)}</size>";
+                $"자동속도\n{UITheme.StatVal($"{ps.AutoAttackSpeed:F2}/s")} <size=18>{UITheme.EquipPct(ps.EquipAutoAttackSpeedPct)}</size>\n\n" +
+                $"크리티컬 배수\n{UITheme.StatVal($"x{ps.CriticalDamage:F2}")} <size=18>{UITheme.EquipPct(ps.EquipCriticalDamagePct)}</size>";
 
             string dropText = ps.EquipDropRatePct != 0
                 ? $"\n\n드랍률\n{UITheme.EquipPct(ps.EquipDropRatePct)}" : "";
@@ -150,6 +277,7 @@ namespace IdleGame.UI.Panels
             foreach (var item in InventoryManager.Instance.ShopItems)
             {
                 if (item == null || !InventoryManager.Instance.IsOwned(item)) continue;
+                if (_activeSlotFilter != null && item.slot != _activeSlotFilter) continue;
                 if (item.isStackable)                consumables.Add(item);
                 else if (item.slot == EquipSlot.Talisman) talismans.Add(item);
                 else                                 equips.Add(item);
@@ -166,13 +294,23 @@ namespace IdleGame.UI.Panels
             equips.Sort(equipSort);
 
             if (equips.Count == 0)
-                AddEmptyLabel("보유 장비 없음");
+            {
+                // 부적 필터 중에는 equips가 당연히 비어있으므로 "없음" 메시지 미표시
+                if (_activeSlotFilter != EquipSlot.Talisman)
+                {
+                    string emptyMsg = _activeSlotFilter.HasValue
+                        ? $"보유 {_activeSlotFilter.Value.ToKorean()} 없음"
+                        : "보유 장비 없음";
+                    AddEmptyLabel(emptyMsg);
+                }
+            }
             else
                 foreach (var item in equips) CreateItemRow(item);
 
             if (talismans.Count > 0)
             {
-                AddSectionHeader("- 부적 -");
+                // 전체 보기에서만 부적 섹션 헤더 표시 (부적 필터 시 헤더 불필요)
+                if (_activeSlotFilter == null) AddSectionHeader("- 부적 -");
                 talismans.Sort(equipSort);
                 foreach (var item in talismans) CreateTalismanRow(item);
             }
@@ -183,7 +321,7 @@ namespace IdleGame.UI.Panels
                 foreach (var item in consumables) CreateConsumableRow(item);
             }
 
-            if (InventoryManager.Instance.SetBonuses != null)
+            if (_activeSlotFilter == null && InventoryManager.Instance.SetBonuses != null)
             {
                 bool hasSet = false;
                 foreach (var setData in InventoryManager.Instance.SetBonuses)
@@ -324,6 +462,24 @@ namespace IdleGame.UI.Panels
                 offsetMin: Vector2.zero, offsetMax: Vector2.zero,
                 color: UITheme.TxtEmpty);
             go.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 65);
+        }
+
+        private static Color GetFilterBtnColor(bool active) =>
+            active ? new Color(0.25f, 0.55f, 0.90f) : new Color(0.18f, 0.20f, 0.26f);
+
+        private void UpdateFilterColors()
+        {
+            if (_filterBtnImages == null) return;
+            for (int i = 0; i < _filterBtnImages.Length; i++)
+                if (_filterBtnImages[i] != null)
+                    _filterBtnImages[i].color = GetFilterBtnColor(FILTER_SLOTS[i] == _activeSlotFilter);
+        }
+
+        private void UpdateFilterToggleLabel()
+        {
+            if (_filterToggleLabel == null) return;
+            string slotName = _activeSlotFilter.HasValue ? _activeSlotFilter.Value.ToKorean() : "전체";
+            _filterToggleLabel.text = $"≡  슬롯 필터: {slotName}";
         }
 
         private GameObject MakeRow(Color bgColor, int height)

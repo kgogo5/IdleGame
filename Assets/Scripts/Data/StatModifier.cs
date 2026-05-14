@@ -22,6 +22,8 @@ namespace IdleGame.Data
                 StatType.GoldMultiplier  => "골드 배율",
                 StatType.DropRate        => "아이템 드랍률",
                 StatType.BossSpawnRate   => "보스 등장 확률",
+                StatType.CriticalChance  => "크리티컬 확률",
+                StatType.CriticalDamage  => "크리티컬 데미지 배수",
                 _                        => statType.ToString(),
             };
             return $"{sign}{percent * 100:F0}% {stat}";

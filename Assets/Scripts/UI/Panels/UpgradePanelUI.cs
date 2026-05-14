@@ -124,11 +124,13 @@ namespace IdleGame.UI.Panels
 
             _sumC1.text =
                 $"클릭 데미지\n{UITheme.SkillBonus(ps.UpgradeClickDamage)}\n\n" +
-                $"자동공격\n{UITheme.SkillBonus(ps.UpgradeAutoDamage)}";
+                $"자동공격\n{UITheme.SkillBonus(ps.UpgradeAutoDamage)}\n\n" +
+                $"크리티컬 확률\n{UITheme.StatVal($"{ps.CriticalChance * 100:F1}%")}";
 
             _sumC2.text =
                 $"공격속도\n{UITheme.SkillSpeed(ps.UpgradeAttackSpeed)}\n\n" +
-                $"자동공격속도\n{UITheme.SkillSpeed(ps.UpgradeAutoAttackSpeed)}";
+                $"자동공격속도\n{UITheme.SkillSpeed(ps.UpgradeAutoAttackSpeed)}\n\n" +
+                $"크리티컬 배수\n{UITheme.StatVal($"x{ps.CriticalDamage:F2}")}";
 
             _sumC3.text = $"골드 배율\n{UITheme.SkillBonus(ps.UpgradeGoldMultiplier)}";
         }
