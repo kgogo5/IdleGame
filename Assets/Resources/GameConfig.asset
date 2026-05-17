@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a954664da9ed6084982f9a2663375dfe, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: Assembly-CSharp::IdleGame.Data.GameConfig
+  monsterSizeMultiplier: 1
+  baseClickDamage: 10
+  baseAttackSpeed: 2
+  baseAutoDamage: 0
+  baseAutoAttackSpeed: 1
+  baseGoldMultiplier: 1
+  goldPerStage: 25
+  goldOnHitRatio: 0.05
+  bossGoldPerStage: 500
+  bossSpawnChance: 0.03
+  fallbackBossMaxHealth: 5000
+  fallbackBossRegenPerSecond: 30
+  fallbackBossDropChance: 0.8
+  fallbackBossRareWeight: 65
+  fallbackBossUniqueWeight: 25
+  fallbackBossLegendaryWeight: 10
+  defaultNormalWeight: 82
+  defaultRareWeight: 16
+  defaultUniqueWeight: 1.8
+  defaultLegendaryWeight: 0.2
+  upgradeCostMultiplier: 1
+  upgradeScalingMultiplier: 1
+  fleeCostRatio: 0.3

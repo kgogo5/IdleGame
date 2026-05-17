@@ -8,22 +8,11 @@ namespace IdleGame.UI.Panels
 {
     public class StageSelectPanelUI : MonoBehaviour
     {
-        private static readonly string[] STAGE_NAMES =
+        private static string GetZoneName(int stage)
         {
-            "",                      // 0 (unused)
-            "Stage 1  초원",         // 1
-            "Stage 2  석굴",         // 2
-            "Stage 3  어둠의 숲",    // 3
-            "Stage 4  지하 묘지",    // 4
-            "Stage 5  불의 협곡",    // 5
-            "Stage 6  잊혀진 폐허",  // 6
-            "Stage 7  공포의 수도원",// 7
-            "Stage 8  강철 요새",    // 8
-            "Stage 9  지옥문",       // 9
-            "Stage 10 절망의 탑",    // 10
-            "Stage 11 혼돈의 성역",  // 11
-            "Stage 12 지옥 심층부",  // 12
-        };
+            var cfg = MonsterManager.Instance?.GetConfigForStage(stage);
+            return cfg != null ? cfg.environmentName : $"Stage {stage}";
+        }
 
         private GameObject _overlay;
         private List<Button> _stageButtons = new();
@@ -151,8 +140,12 @@ namespace IdleGame.UI.Panels
                 ? MonsterManager.Instance.MaxStageReached
                 : 1;
 
-            for (int s = 1; s <= Mathf.Max(maxStage, 12); s++)
-                _stageButtons.Add(CreateStageButton(_overlay.transform, s, s <= maxStage));
+            var configs = MonsterManager.Instance?.StageConfigs;
+            if (configs != null)
+            {
+                foreach (var cfg in configs)
+                    _stageButtons.Add(CreateStageButton(_overlay.transform, cfg.stageFrom, maxStage >= cfg.stageFrom));
+            }
 
             RefreshButtons();
         }
@@ -186,7 +179,9 @@ namespace IdleGame.UI.Panels
             labelRt.offsetMin = new Vector2(12, 0);
             labelRt.offsetMax = new Vector2(0, -4);
             var label = labelObj.AddComponent<TextMeshProUGUI>();
-            label.text = stage < STAGE_NAMES.Length ? STAGE_NAMES[stage] : $"Stage {stage}";
+            var zoneCfg = MonsterManager.Instance?.GetConfigForStage(stage);
+            string range = zoneCfg != null ? $"  {zoneCfg.stageFrom}~{zoneCfg.stageTo}" : "";
+            label.text = $"{GetZoneName(stage)}{range}";
             label.fontSize = 15;
             label.color = unlocked ? Color.white : new Color(0.4f, 0.4f, 0.4f);
             label.alignment = TextAlignmentOptions.MidlineLeft;
@@ -224,14 +219,15 @@ namespace IdleGame.UI.Panels
             int current = MonsterManager.Instance.Stage;
             int max     = MonsterManager.Instance.MaxStageReached;
 
+            var configs = MonsterManager.Instance?.StageConfigs;
             for (int i = 0; i < _stageButtons.Count; i++)
             {
-                int stage = i + 1;
                 var btn = _stageButtons[i];
                 if (btn == null) continue;
 
-                bool unlocked = stage <= max;
-                bool isCurrent = stage == current;
+                var cfg = (configs != null && i < configs.Length) ? configs[i] : null;
+                bool unlocked  = cfg != null ? max >= cfg.stageFrom : false;
+                bool isCurrent = cfg != null && current >= cfg.stageFrom && current <= cfg.stageTo;
 
                 var img = btn.GetComponent<Image>();
                 if (img != null)

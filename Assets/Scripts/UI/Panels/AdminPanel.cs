@@ -69,6 +69,11 @@ namespace IdleGame.UI.Panels
             AddGoldButtons(panel.transform);
             AddDivider(panel.transform);
 
+            // 스테이지 이동
+            AddLabel(panel.transform, "스테이지 이동", 24, new Color(0.8f, 0.8f, 0.4f), FontStyles.Normal, 40f);
+            AddStageJumpRow(panel.transform);
+            AddDivider(panel.transform);
+
             // 치트 기능
             AddLabel(panel.transform, "치트", 24, new Color(0.8f, 0.8f, 0.4f), FontStyles.Normal, 40f);
             AddCheatButton(panel.transform, "업그레이드 모두 최대",
@@ -79,6 +84,52 @@ namespace IdleGame.UI.Panels
 
             // 닫기
             AddCheatButton(panel.transform, "닫기", new Color(0.5f, 0.15f, 0.15f), Hide, height: 70f);
+        }
+
+        private void AddStageJumpRow(Transform parent)
+        {
+            // 존 버튼 행: 초원(1) 숲(11) 사막(21) 동굴(31) ...
+            (string label, int stage)[] zones =
+            {
+                ("초원",  1), ("숲",  11), ("사막", 21), ("동굴", 31), ("설원", 41),
+            };
+
+            GameObject row1 = new GameObject("ZoneRow1");
+            row1.transform.SetParent(parent, false);
+            LayoutElement r1le = row1.AddComponent<LayoutElement>();
+            r1le.preferredHeight = 72f; r1le.flexibleHeight = 0f;
+            HorizontalLayoutGroup hlg1 = row1.AddComponent<HorizontalLayoutGroup>();
+            hlg1.spacing = 10f;
+            hlg1.childForceExpandWidth = true; hlg1.childForceExpandHeight = true;
+            hlg1.childControlWidth = true;     hlg1.childControlHeight = true;
+
+            foreach (var (label, stageNum) in zones)
+            {
+                int captured = stageNum;
+                AddRowButton(row1.transform, label, new Color(0.25f, 0.40f, 0.60f),
+                    () => MonsterManager.Instance?.JumpToStage(captured));
+            }
+
+            (string label, int stage)[] zones2 =
+            {
+                ("천공", 51), ("유적", 61), ("마계", 71), ("공허", 81), ("심연", 91),
+            };
+
+            GameObject row2 = new GameObject("ZoneRow2");
+            row2.transform.SetParent(parent, false);
+            LayoutElement r2le = row2.AddComponent<LayoutElement>();
+            r2le.preferredHeight = 72f; r2le.flexibleHeight = 0f;
+            HorizontalLayoutGroup hlg2 = row2.AddComponent<HorizontalLayoutGroup>();
+            hlg2.spacing = 10f;
+            hlg2.childForceExpandWidth = true; hlg2.childForceExpandHeight = true;
+            hlg2.childControlWidth = true;     hlg2.childControlHeight = true;
+
+            foreach (var (label, stageNum) in zones2)
+            {
+                int captured = stageNum;
+                AddRowButton(row2.transform, label, new Color(0.35f, 0.25f, 0.50f),
+                    () => MonsterManager.Instance?.JumpToStage(captured));
+            }
         }
 
         private void AddGoldButtons(Transform parent)

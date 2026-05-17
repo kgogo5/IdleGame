@@ -58,6 +58,13 @@ namespace IdleGame.Data
 
         // stab_line 전용
         public float stabLength;      // 찌르기 선 길이
+
+        // 텍스처/스프라이트 시트
+        public string materialPath;      // Resources 하위 경로 (확장자 제외), 비어있으면 기본 머티리얼
+        public int sheetColumns;         // 스프라이트 시트 열 수 (0이면 시트 미사용)
+        public int sheetRows;            // 스프라이트 시트 행 수
+        public bool sheetRandomFrame;    // true: 파티클마다 랜덤 프레임 고정 / false: 순차 재생
+        public float sheetFrameOverTime; // 순차 재생 시 속도 배율 (sheetRandomFrame=false일 때만 사용)
     }
 
     [Serializable]

@@ -32,6 +32,24 @@ namespace IdleGame.Data
         //  · 올리면 초반이 쉬워짐, 내리면 어려워짐
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+        [Header("━━ 몬스터 ━━")]
+
+        [Tooltip("전체 몬스터 크기 배율.\n1.0 = 기본, 0.5 = 절반, 2.0 = 두 배.")]
+        public float monsterSizeMultiplier = 1.0f;
+
+        [Tooltip("타격 이미지 유지 시간(초).\n0.12 = 기본, 높을수록 타격 이미지가 오래 보임.")]
+        public float hitSpriteDuration = 0.12f;
+
+        [Header("━━ 몬스터 그림자 ━━")]
+        [Tooltip("그림자 활성화 여부")]
+        public bool shadowEnabled = true;
+        [Tooltip("그림자 색상 및 투명도")]
+        public Color shadowColor = new Color(0f, 0f, 0f, 0.35f);
+        [Tooltip("그림자 위치 오프셋 (x: 좌우, y: 상하)")]
+        public Vector2 shadowOffset = new Vector2(0.08f, -0.18f);
+        [Tooltip("그림자 스케일 배율 (x: 가로, y: 세로)\n가로를 늘리고 세로를 줄이면 자연스러운 그림자")]
+        public Vector2 shadowScale = new Vector2(1.0f, 0.25f);
+
         [Header("━━ 플레이어 기본 스탯 ━━")]
 
         [Tooltip("클릭 1회당 기본 데미지.\n" +
