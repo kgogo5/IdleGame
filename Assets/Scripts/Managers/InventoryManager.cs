@@ -18,10 +18,12 @@ namespace IdleGame.Managers
 
         private ItemData[] _shopItems;
 
-        private readonly Dictionary<string, int>        _owned        = new();
-        private readonly Dictionary<EquipSlot, ItemData> _equipped   = new();
-        private readonly List<StatModifier[]>            _activeSets = new();
-        private readonly HashSet<string>                 _everObtained = new();
+        private readonly Dictionary<string, int>         _owned        = new();
+        private readonly Dictionary<EquipSlot, ItemData> _equipped    = new();
+        private readonly List<StatModifier[]>             _activeSets  = new();
+        private readonly HashSet<string>                  _everObtained = new();
+        // 활성 SetEffect 코루틴 추적
+        private readonly List<(Data.SetEffect effect, Coroutine coroutine)> _activeEffects = new();
 
         public ItemData[]     ShopItems  => _shopItems;
         public SetBonusData[] SetBonuses => _setBonuses;
@@ -580,6 +582,23 @@ namespace IdleGame.Managers
             레전4_목걸이.minDropStage = 12;
             list.Add(레전4_목걸이);
 
+            // ── 크리티컬 테스트 아이템 (Stage 3 / 5, 처형자 세트) ──
+
+            var 크리반지 = Equip("크리티컬_반지", "크리티컬의 반지",
+                "+15% 크리티컬 확률",
+                0, 3_000, ItemRarity.Rare, EquipSlot.Ring, "처형자세트",
+                (StatType.CriticalChance, 0.15f));
+            크리반지.minDropStage = 3;
+            list.Add(크리반지);
+
+            var 처형검 = Equip("처형자_검", "처형자의 검",
+                "+10% 크리티컬 확률  +50% 크리티컬 배수",
+                0, 5_000, ItemRarity.Rare, EquipSlot.Weapon, "처형자세트",
+                (StatType.CriticalChance, 0.10f), (StatType.CriticalDamage, 0.50f));
+            처형검.particleEffectId = "hit_slash";
+            처형검.minDropStage = 5;
+            list.Add(처형검);
+
             // ── 부적 (드랍 전용, Talisman 슬롯 — 하나씩만 장착 가능) ──
             list.Add(Equip("소모_자동소", "자동 장치 부적",
                 "+8% 자동공격 데미지",
@@ -756,6 +775,32 @@ namespace IdleGame.Managers
                         new[] { (StatType.AutoDamage, 1.00f), (StatType.GoldMultiplier, 0.60f), (StatType.ClickDamage, -0.60f) }),
                 }));
 
+            // ── 처형자 세트 (크리티컬 테스트용) ──
+            var 처형세트 = ScriptableObject.CreateInstance<SetBonusData>();
+            처형세트.name     = "처형자세트";
+            처형세트.setName  = "처형자의";
+            처형세트.itemNames = new[] { "크리티컬_반지", "처형자_검" };
+
+            var 폭풍연타 = ScriptableObject.CreateInstance<Data.PeriodicSkillEffect>();
+            폭풍연타.name            = "폭풍 연타";
+            폭풍연타.skillName       = "폭풍 연타";
+            폭풍연타.particleEffectId = "hit_slash";
+            폭풍연타.intervalSeconds  = 4f;
+            폭풍연타.damageSource     = Data.SkillDamageSource.AutoDamage;
+            폭풍연타.multiplier       = 3f;
+
+            처형세트.steps = new[]
+            {
+                new SetBonusData.SetStep
+                {
+                    requiredCount = 2,
+                    description   = "2세트: +20% 크리티컬 확률  |  4초마다 자동공격 3배 폭풍 연타",
+                    bonuses       = new[] { new StatModifier { statType = StatType.CriticalChance, percent = 0.20f } },
+                    effects       = new Data.SetEffect[] { 폭풍연타 },
+                },
+            };
+            list.Add(처형세트);
+
             _setBonuses = list.ToArray();
         }
 
@@ -918,19 +963,36 @@ namespace IdleGame.Managers
 
         private void RecalculateSetBonuses()
         {
+            // 스탯 보너스 제거
             foreach (var bonuses in _activeSets)
                 foreach (var mod in bonuses)
                     PlayerStats.Instance.AddEquipModifier(mod.statType, -mod.percent);
             _activeSets.Clear();
 
+            // SetEffect 코루틴 중단
+            foreach (var (_, coroutine) in _activeEffects)
+                if (coroutine != null) StopCoroutine(coroutine);
+            _activeEffects.Clear();
+
             if (_setBonuses == null) return;
             foreach (var setData in _setBonuses)
             {
                 var step = setData.GetActiveStep(CountEquippedFromSet(setData));
-                if (step?.bonuses == null) continue;
-                _activeSets.Add(step.bonuses);
-                foreach (var mod in step.bonuses)
-                    PlayerStats.Instance.AddEquipModifier(mod.statType, mod.percent);
+                if (step == null) continue;
+
+                // 스탯 보너스 적용
+                if (step.bonuses != null)
+                {
+                    _activeSets.Add(step.bonuses);
+                    foreach (var mod in step.bonuses)
+                        PlayerStats.Instance.AddEquipModifier(mod.statType, mod.percent);
+                }
+
+                // SetEffect 코루틴 시작
+                if (step.effects != null)
+                    foreach (var effect in step.effects)
+                        if (effect != null)
+                            _activeEffects.Add((effect, StartCoroutine(effect.Run())));
             }
         }
 
@@ -966,6 +1028,9 @@ namespace IdleGame.Managers
                 foreach (var mod in bonuses)
                     PlayerStats.Instance.AddEquipModifier(mod.statType, -mod.percent);
 
+            foreach (var (_, coroutine) in _activeEffects)
+                if (coroutine != null) StopCoroutine(coroutine);
+            _activeEffects.Clear();
             _owned.Clear(); _equipped.Clear(); _activeSets.Clear(); _everObtained.Clear();
             PlayerPrefs.DeleteKey("ever_obtained");
             OnInventoryChanged?.Invoke();

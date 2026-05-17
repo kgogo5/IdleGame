@@ -9,9 +9,10 @@ namespace IdleGame.Data
         [Serializable]
         public class SetStep
         {
-            public int requiredCount;
+            public int            requiredCount;
             [TextArea] public string description;
             public StatModifier[] bonuses;
+            public SetEffect[]    effects;   // 스탯 외 능동 효과
         }
 
         public string setName;
