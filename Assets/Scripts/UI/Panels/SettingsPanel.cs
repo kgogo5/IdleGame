@@ -606,10 +606,45 @@ namespace IdleGame.UI.Panels
 
             AddAdminDivider(sc);
 
+            AddAdminLabel(sc, "스테이지 이동");
+            AddStageJumpRows(sc);
+
+            AddAdminDivider(sc);
+
             AddDevMultiplierSection(sc);
         }
 
         // ── 테스트 배속 ──────────────────────────────────────────────────────────
+
+        private void AddStageJumpRows(Transform p)
+        {
+            (string label, int stage)[] row1 =
+            {
+                ("초원",  1), ("숲",  11), ("사막", 21), ("동굴", 31), ("설원", 41),
+            };
+            (string label, int stage)[] row2 =
+            {
+                ("천공", 51), ("유적", 61), ("마계", 71), ("공허", 81), ("심연", 91),
+            };
+
+            void MakeRow((string label, int stage)[] zones, Color color)
+            {
+                var row = new GameObject("StageRow"); row.transform.SetParent(p, false);
+                row.AddComponent<LayoutElement>().preferredHeight = 60f;
+                var hlg = row.AddComponent<HorizontalLayoutGroup>();
+                hlg.spacing = 6f;
+                hlg.childForceExpandWidth = true; hlg.childForceExpandHeight = true;
+                hlg.childControlWidth = true;     hlg.childControlHeight = true;
+                foreach (var (label, stageNum) in zones)
+                {
+                    int s = stageNum;
+                    AddInlineBtn(row.transform, label, color, () => MonsterManager.Instance?.JumpToStage(s));
+                }
+            }
+
+            MakeRow(row1, new Color(0.20f, 0.40f, 0.60f));
+            MakeRow(row2, new Color(0.35f, 0.22f, 0.52f));
+        }
 
         private void AddDevMultiplierSection(Transform p)
         {

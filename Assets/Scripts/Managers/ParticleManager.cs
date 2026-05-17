@@ -83,6 +83,7 @@ namespace IdleGame.Managers
             ApplyEmission(ps, data);
             ApplyShape(ps, data);
             ApplyRenderer(ps, data);
+            ApplyTextureSheetAnimation(ps, data);
             ApplySizeOverLifetime(ps, data);
             ApplyColorOverLifetime(ps, data);
 
@@ -249,6 +250,7 @@ namespace IdleGame.Managers
             shape.enabled = false;
 
             ApplyRenderer(ps, d);
+            ApplyTextureSheetAnimation(ps, d);
             ApplySizeOverLifetime(ps, d);
             ApplyColorOverLifetime(ps, d);
 
@@ -332,6 +334,44 @@ namespace IdleGame.Managers
             }
 
             renderer.sortingOrder = 10; // 몬스터 스프라이트(0) 앞에 렌더링
+
+            // 커스텀 머티리얼 적용
+            if (!string.IsNullOrEmpty(d.materialPath))
+            {
+                var mat = Resources.Load<Material>(d.materialPath);
+                if (mat != null)
+                    renderer.material = mat;
+                else
+                    Debug.LogWarning($"[ParticleManager] 머티리얼을 찾을 수 없음: {d.materialPath}");
+            }
+        }
+
+        private static void ApplyTextureSheetAnimation(ParticleSystem ps, ParticleEffectData d)
+        {
+            if (d.sheetColumns <= 0) return;
+
+            var tsa = ps.textureSheetAnimation;
+            tsa.enabled   = true;
+            tsa.mode      = ParticleSystemAnimationMode.Grid;
+            tsa.numTilesX = d.sheetColumns;
+            tsa.numTilesY = Mathf.Max(1, d.sheetRows);
+            tsa.animation = ParticleSystemAnimationType.WholeSheet;
+
+            if (d.sheetRandomFrame)
+            {
+                // 각 파티클이 태어날 때 랜덤 프레임 선택 후 고정
+                tsa.startFrame    = new ParticleSystem.MinMaxCurve(0f, 1f);
+                tsa.frameOverTime = new ParticleSystem.MinMaxCurve(0f);
+            }
+            else
+            {
+                // 순차 재생
+                float speed = d.sheetFrameOverTime > 0f ? d.sheetFrameOverTime : 1f;
+                tsa.frameOverTime = new ParticleSystem.MinMaxCurve(
+                    speed,
+                    AnimationCurve.Linear(0f, 0f, 1f, 1f)
+                );
+            }
         }
 
         private static void ApplySizeOverLifetime(ParticleSystem ps, ParticleEffectData d)

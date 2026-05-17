@@ -27,29 +27,56 @@ namespace IdleGame.Core
 
             if (MonsterManager.Instance != null)
             {
-                MonsterManager.Instance.OnStageChanged += OnStageChanged;
-                ApplyForStage(MonsterManager.Instance.Stage);
+                MonsterManager.Instance.OnStageChanged    += OnStageChanged;
+                MonsterManager.Instance.OnMonsterSpawned  += OnMonsterSpawned;
+                ApplyForMonster(MonsterManager.Instance.CurrentMonster);
             }
         }
 
         private void OnDestroy()
         {
             if (MonsterManager.Instance != null)
-                MonsterManager.Instance.OnStageChanged -= OnStageChanged;
+            {
+                MonsterManager.Instance.OnStageChanged   -= OnStageChanged;
+                MonsterManager.Instance.OnMonsterSpawned -= OnMonsterSpawned;
+            }
         }
 
-        private void OnStageChanged(int stage) => ApplyForStage(stage);
+        private void OnStageChanged(int stage) => ApplyRandom(stage, isBoss: false);
 
-        private void ApplyForStage(int stage)
+        private void OnMonsterSpawned(Monster monster)
+        {
+            ApplyForMonster(monster);
+        }
+
+        private void ApplyForMonster(Monster monster)
+        {
+            if (monster == null) return;
+            int stage = MonsterManager.Instance?.Stage ?? 1;
+            ApplyRandom(stage, isBoss: monster.IsBoss);
+        }
+
+        private void ApplyRandom(int stage, bool isBoss)
         {
             var cfg = MonsterManager.Instance?.GetConfigForStage(stage);
-            if (cfg != null && !string.IsNullOrEmpty(cfg.backgroundPath))
-                SetBackground(cfg.backgroundPath);
+            if (cfg == null) return;
+
+            if (isBoss && !string.IsNullOrEmpty(cfg.bossBgPath))
+            {
+                SetBackground(cfg.bossBgPath);
+                return;
+            }
+
+            if (cfg.backgroundPaths != null && cfg.backgroundPaths.Length > 0)
+            {
+                int idx = Random.Range(0, cfg.backgroundPaths.Length);
+                SetBackground(cfg.backgroundPaths[idx]);
+            }
         }
 
         public void SetBackground(string resourcePath)
         {
-            if (string.IsNullOrEmpty(resourcePath) || resourcePath == _loadedPath) return;
+            if (string.IsNullOrEmpty(resourcePath)) return;
 
             Sprite sprite = Resources.Load<Sprite>(resourcePath);
             if (sprite == null)

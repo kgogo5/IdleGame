@@ -25,6 +25,8 @@ namespace IdleGame.Data
         public Vector2 spriteSize = Vector2.one;
         public Color tintColor = Color.white;
         public Color damageFlashColor = Color.red;
+        public Sprite hitSprite;        // 타격 시 잠깐 표시되는 이미지
+        public float hitSpriteDuration = 0.12f; // 타격 이미지 유지 시간(초)
 
         [Header("드랍")]
         [Range(0f, 1f)] public float dropChance = 0.08f;

@@ -15,6 +15,7 @@ namespace IdleGame.Core
         private float _regenPerSecond;
         private Vector3 _originalPosition;
         private bool _isDead;
+        private SpriteRenderer _shadowRenderer;
 
         [SerializeField] private float _shakeDuration = 0.1f;
         [SerializeField] private float _shakeAmount = 0.1f;
@@ -47,6 +48,15 @@ namespace IdleGame.Core
                 sr.color  = data.tintColor;
             }
 
+            var s = data.spriteSize;
+            if (s != Vector2.zero)
+            {
+                float m = Data.GameConfig.Get().monsterSizeMultiplier;
+                transform.localScale = new Vector3(s.x * m, s.y * m, 1f);
+            }
+
+            SetupShadow(data);
+
             OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
         }
 
@@ -67,7 +77,51 @@ namespace IdleGame.Core
             _currentHealth = System.Math.Max(0, _currentHealth - damage);
             OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
             StartCoroutine(ShakeEffect());
+            if (_data.hitSprite != null)
+                StartCoroutine(HitSpriteEffect());
             if (_currentHealth <= 0) Die();
+        }
+
+        private IEnumerator HitSpriteEffect()
+        {
+            var sr = GetComponent<SpriteRenderer>();
+            if (sr == null) yield break;
+
+            sr.sprite = _data.hitSprite;
+            if (_shadowRenderer != null) _shadowRenderer.sprite = _data.hitSprite;
+
+            yield return new WaitForSeconds(Data.GameConfig.Get().hitSpriteDuration);
+
+            if (!_isDead && sr != null)
+            {
+                sr.sprite = _data.sprite;
+                if (_shadowRenderer != null) _shadowRenderer.sprite = _data.sprite;
+            }
+        }
+
+        private void SetupShadow(MonsterData data)
+        {
+            var cfg = Data.GameConfig.Get();
+            if (!cfg.shadowEnabled) return;
+
+            // 기존 그림자 제거
+            var old = transform.Find("Shadow");
+            if (old != null) Destroy(old.gameObject);
+
+            var mainSr = GetComponent<SpriteRenderer>();
+
+            var shadowObj = new GameObject("Shadow");
+            shadowObj.transform.SetParent(transform, false);
+
+            // 스프라이트 하단 기준으로 위치 계산
+            float spriteBottom = mainSr.localBounds.min.y;
+            shadowObj.transform.localPosition = new Vector3(cfg.shadowOffset.x, spriteBottom + cfg.shadowOffset.y, 0.01f);
+            shadowObj.transform.localScale    = new Vector3(cfg.shadowScale.x, cfg.shadowScale.y, 1f);
+            _shadowRenderer = shadowObj.AddComponent<SpriteRenderer>();
+            _shadowRenderer.sprite           = data.sprite;
+            _shadowRenderer.color            = cfg.shadowColor;
+            _shadowRenderer.sortingLayerName = mainSr.sortingLayerName;
+            _shadowRenderer.sortingOrder     = mainSr.sortingOrder - 1;
         }
 
         private IEnumerator ShakeEffect()
