@@ -586,14 +586,14 @@ namespace IdleGame.Managers
 
             var 크리반지 = Equip("크리티컬_반지", "크리티컬의 반지",
                 "+15% 크리티컬 확률",
-                0, 3_000, ItemRarity.Rare, EquipSlot.Ring, "처형자세트",
+                0, 30_000, ItemRarity.Unique, EquipSlot.Ring, "처형자세트",
                 (StatType.CriticalChance, 0.15f));
             크리반지.minDropStage = 3;
             list.Add(크리반지);
 
             var 처형검 = Equip("처형자_검", "처형자의 검",
                 "+10% 크리티컬 확률  +50% 크리티컬 배수",
-                0, 5_000, ItemRarity.Rare, EquipSlot.Weapon, "처형자세트",
+                0, 35_000, ItemRarity.Unique, EquipSlot.Weapon, "처형자세트",
                 (StatType.CriticalChance, 0.10f), (StatType.CriticalDamage, 0.50f));
             처형검.particleEffectId = "hit_slash";
             처형검.minDropStage = 5;
