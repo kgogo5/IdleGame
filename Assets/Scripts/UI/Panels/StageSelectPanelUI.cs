@@ -179,9 +179,7 @@ namespace IdleGame.UI.Panels
             labelRt.offsetMin = new Vector2(12, 0);
             labelRt.offsetMax = new Vector2(0, -4);
             var label = labelObj.AddComponent<TextMeshProUGUI>();
-            var zoneCfg = MonsterManager.Instance?.GetConfigForStage(stage);
-            string range = zoneCfg != null ? $"  {zoneCfg.stageFrom}~{zoneCfg.stageTo}" : "";
-            label.text = $"{GetZoneName(stage)}{range}";
+            label.text = $"[{stage}]  {GetZoneName(stage)}";
             label.fontSize = 15;
             label.color = unlocked ? Color.white : new Color(0.4f, 0.4f, 0.4f);
             label.alignment = TextAlignmentOptions.MidlineLeft;
@@ -200,15 +198,12 @@ namespace IdleGame.UI.Panels
             badge.color = new Color(0.5f, 0.5f, 0.5f);
             badge.alignment = TextAlignmentOptions.MidlineRight;
 
-            if (unlocked)
+            int captured = stage;
+            button.onClick.AddListener(() =>
             {
-                int captured = stage;
-                button.onClick.AddListener(() =>
-                {
-                    MonsterManager.Instance?.SelectStage(captured);
-                    RefreshButtons();
-                });
-            }
+                MonsterManager.Instance?.SelectStage(captured);
+                RefreshButtons();
+            });
 
             return button;
         }
@@ -226,8 +221,10 @@ namespace IdleGame.UI.Panels
                 if (btn == null) continue;
 
                 var cfg = (configs != null && i < configs.Length) ? configs[i] : null;
-                bool unlocked  = cfg != null ? max >= cfg.stageFrom : false;
+                bool unlocked  = cfg != null && max >= cfg.stageFrom;
                 bool isCurrent = cfg != null && current >= cfg.stageFrom && current <= cfg.stageTo;
+
+                btn.interactable = unlocked;
 
                 var img = btn.GetComponent<Image>();
                 if (img != null)
@@ -235,12 +232,11 @@ namespace IdleGame.UI.Panels
                         ? new Color(0.15f, 0.45f, 0.70f)
                         : (unlocked ? new Color(0.18f, 0.22f, 0.30f) : new Color(0.12f, 0.12f, 0.15f));
 
-                var badge = btn.GetComponentInChildren<TextMeshProUGUI>(); // 첫 번째 tmp는 label
                 var tmps = btn.GetComponentsInChildren<TextMeshProUGUI>();
                 if (tmps.Length >= 2)
                 {
-                    tmps[1].text = isCurrent ? "▶ 현재"
-                                 : (unlocked ? "" : "🔒");
+                    tmps[0].color = unlocked ? Color.white : new Color(0.4f, 0.4f, 0.4f);
+                    tmps[1].text  = isCurrent ? "▶ 현재" : (unlocked ? "" : "🔒");
                     tmps[1].color = isCurrent ? new Color(0.4f, 1f, 0.6f) : new Color(0.5f, 0.5f, 0.5f);
                 }
             }

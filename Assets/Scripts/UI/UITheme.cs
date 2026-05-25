@@ -47,7 +47,13 @@ namespace IdleGame.UI
         public static readonly Color BtnMaxed        = new Color(0.40f, 0.32f, 0.05f);
         public static readonly Color BtnSell         = new Color(0.60f, 0.30f, 0.10f);
         public static readonly Color BtnSellAll      = new Color(0.45f, 0.20f, 0.08f);
+        public static readonly Color BtnSellAllRare  = new Color(0.18f, 0.28f, 0.55f);
         public static readonly Color BtnDisabled     = new Color(0.22f, 0.22f, 0.22f);
+
+        // ── 확인 다이얼로그 ──────────────────────────────────
+        public static readonly Color BgConfirmCard    = new Color(0.13f, 0.17f, 0.23f, 1f);
+        public static readonly Color BtnConfirmOk     = new Color(0.15f, 0.48f, 0.22f);
+        public static readonly Color BtnConfirmCancel = new Color(0.38f, 0.15f, 0.15f);
         public static readonly Color BtnShopBuyable  = new Color(0.20f, 0.55f, 0.20f);
         public static readonly Color BtnShopCantAfford = new Color(0.28f, 0.28f, 0.28f);
 

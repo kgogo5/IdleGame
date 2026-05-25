@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using IdleGame.Core;
 using IdleGame.Managers;
@@ -16,6 +17,8 @@ namespace IdleGame.UI
 
         private Button _fleeButton;
         private TextMeshProUGUI _fleeLabel;
+        private Canvas _canvas;
+        private GameObject _fleeConfirmOverlay;
 
         private void Start()
         {
@@ -64,12 +67,12 @@ namespace IdleGame.UI
 
         private void CreateFleeButton()
         {
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas == null) canvas = FindAnyObjectByType<Canvas>();
-            if (canvas == null) return;
+            _canvas = GetComponentInParent<Canvas>();
+            if (_canvas == null) _canvas = FindAnyObjectByType<Canvas>();
+            if (_canvas == null) return;
 
             GameObject btn = new GameObject("FleeButton");
-            btn.transform.SetParent(canvas.transform, false);
+            btn.transform.SetParent(_canvas.transform, false);
 
             RectTransform rt = btn.AddComponent<RectTransform>();
             rt.anchorMin        = new Vector2(1, 1);
@@ -82,10 +85,7 @@ namespace IdleGame.UI
             bg.color = new Color(0.6f, 0.15f, 0.15f);
 
             _fleeButton = btn.AddComponent<Button>();
-            _fleeButton.onClick.AddListener(() => {
-                MonsterManager.Instance.Flee();
-                RefreshFleeButton();
-            });
+            _fleeButton.onClick.AddListener(ShowFleeConfirm);
 
             GameObject labelObj = new GameObject("Label");
             labelObj.transform.SetParent(btn.transform, false);
@@ -103,8 +103,89 @@ namespace IdleGame.UI
 
         private void OnTabChanged(int tabIndex)
         {
+            bool isBattleTab = tabIndex == 2;
             if (_fleeButton != null)
-                _fleeButton.gameObject.SetActive(tabIndex == 2); // 2 = 전투 탭
+                _fleeButton.gameObject.SetActive(isBattleTab);
+            if (!isBattleTab) CloseFleeConfirm();
+        }
+
+        private void ShowFleeConfirm()
+        {
+            if (_fleeConfirmOverlay != null || _canvas == null) return;
+
+            double cost = MonsterManager.Instance.FleeCost;
+
+            _fleeConfirmOverlay = new GameObject("FleeConfirmOverlay");
+            _fleeConfirmOverlay.transform.SetParent(_canvas.transform, false);
+            var ort = _fleeConfirmOverlay.AddComponent<RectTransform>();
+            ort.anchorMin = Vector2.zero; ort.anchorMax = Vector2.one;
+            ort.offsetMin = ort.offsetMax = Vector2.zero;
+            _fleeConfirmOverlay.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.65f);
+            _fleeConfirmOverlay.AddComponent<Button>().onClick.AddListener(CloseFleeConfirm);
+
+            var card = new GameObject("Card");
+            card.transform.SetParent(_fleeConfirmOverlay.transform, false);
+            var crt = card.AddComponent<RectTransform>();
+            crt.anchorMin = new Vector2(0.5f, 0.5f); crt.anchorMax = new Vector2(0.5f, 0.5f);
+            crt.pivot = new Vector2(0.5f, 0.5f);
+            crt.anchoredPosition = Vector2.zero;
+            crt.sizeDelta = new Vector2(480, 260);
+            card.AddComponent<Image>().color = UITheme.BgConfirmCard;
+            var et = card.AddComponent<EventTrigger>();
+            var blockEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerClick };
+            blockEntry.callback.AddListener(_ => { });
+            et.triggers.Add(blockEntry);
+
+            var vlg = card.AddComponent<VerticalLayoutGroup>();
+            vlg.padding = new RectOffset(24, 24, 24, 24);
+            vlg.spacing = 14;
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+
+            MakeFleeCardLabel(card.transform, "도망가기", 30, Color.white, 46);
+            MakeFleeCardLabel(card.transform, $"도망 비용: {NumberFormatter.Format(cost)} 골드", 26,
+                new Color(1f, 0.75f, 0.3f), 40);
+
+            var btnRow = new GameObject("BtnRow");
+            btnRow.transform.SetParent(card.transform, false);
+            btnRow.AddComponent<LayoutElement>().preferredHeight = 72;
+            var brhlg = btnRow.AddComponent<HorizontalLayoutGroup>();
+            brhlg.spacing = 14;
+            brhlg.childControlWidth = true;
+            brhlg.childControlHeight = true;
+            brhlg.childForceExpandWidth = true;
+            brhlg.childForceExpandHeight = true;
+
+            UIHelper.MakeButton(btnRow.transform, "취소", 28, UITheme.BtnConfirmCancel)
+                .GetComponent<Button>().onClick.AddListener(CloseFleeConfirm);
+            UIHelper.MakeButton(btnRow.transform, "도망가기", 28, new Color(0.6f, 0.15f, 0.15f))
+                .GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    CloseFleeConfirm();
+                    MonsterManager.Instance.Flee();
+                    RefreshFleeButton();
+                });
+        }
+
+        private void CloseFleeConfirm()
+        {
+            if (_fleeConfirmOverlay != null) { Destroy(_fleeConfirmOverlay); _fleeConfirmOverlay = null; }
+        }
+
+        private static void MakeFleeCardLabel(Transform parent, string text, int fontSize, Color color, int height)
+        {
+            var go = new GameObject("Label");
+            go.transform.SetParent(parent, false);
+            go.AddComponent<LayoutElement>().preferredHeight = height;
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = fontSize;
+            tmp.color = color;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
+            tmp.raycastTarget = false;
         }
 
         private void RefreshFleeButton()
@@ -164,6 +245,7 @@ namespace IdleGame.UI
             if (CurrencyManager.Instance != null)
                 CurrencyManager.Instance.OnGoldChanged -= _ => RefreshFleeButton();
             NavigationController.OnTabChanged -= OnTabChanged;
+            CloseFleeConfirm();
         }
     }
 }

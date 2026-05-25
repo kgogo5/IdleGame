@@ -620,11 +620,11 @@ namespace IdleGame.UI.Panels
         {
             (string label, int stage)[] row1 =
             {
-                ("초원",  1), ("숲",  11), ("사막", 21), ("동굴", 31), ("설원", 41),
+                ("초원", 1), ("숲", 2), ("사막", 3), ("동굴", 4), ("설원", 5),
             };
             (string label, int stage)[] row2 =
             {
-                ("천공", 51), ("유적", 61), ("마계", 71), ("공허", 81), ("심연", 91),
+                ("천공", 6), ("유적", 7), ("마계", 8), ("공허", 9), ("심연", 10),
             };
 
             void MakeRow((string label, int stage)[] zones, Color color)

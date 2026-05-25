@@ -121,7 +121,7 @@ namespace IdleGame.Core
             var g9  = MakeMon("초원 아홀로틀",      370,  115, Color.white, GS("axolotl-type_amphibian"),hitSpr:GSHit("axolotl-type_amphibian"));
             var g10 = MakeMon("초원 두더지 골렘",   440,  140, Color.white, GS("mole_golem"),            hitSpr:GSHit("mole_golem"));
             var gb  = MakeMon("초원의 재앙 거대독사왕", 3000, 800, Color.white, GS("giant_serpent_king"),
-                              isBoss:true, dropChance:0.7f, regen:5f, size:new Vector2(1.2f,1.2f), hitSpr:GSHit("giant_serpent_king"));
+                              isBoss:true, dropChance:0.7f, regen:6f, size:new Vector2(1.2f,1.2f), hitSpr:GSHit("giant_serpent_king"));
 
             // ── Zone 2: 숲 (forest) · Stage 11-20 ────────────────────────
             Sprite FS(string name)    => Resources.Load<Sprite>($"Monsters/forest/{name}_default_nobg");
@@ -140,76 +140,76 @@ namespace IdleGame.Core
             var f11 = MakeMon("석회껍질 달팽이 요정",3500,  700, Color.white, FS("calcite_shell_creature"),    hitSpr:FSHit("calcite_shell_creature"));
             var f12 = MakeMon("먹물 나무갑오징어",  4000,   800, Color.white, FS("cuttlefish"),                hitSpr:FSHit("cuttlefish"));
             var fb  = MakeMon("천년 철갑 멧돼지왕", 30000, 4000, Color.white, FS("iron_armored_boar_king"),
-                              isBoss:true, dropChance:0.75f, regen:20f, size:new Vector2(1.2f,1.2f), hitSpr:FSHit("iron_armored_boar_king"));
+                              isBoss:true, dropChance:0.75f, regen:24f, size:new Vector2(1.2f,1.2f), hitSpr:FSHit("iron_armored_boar_king"));
 
             // ── Zone 3: 사막 (desert) · Stage 21-30 ──────────────────────
             var d1 = MakeMon("모래 전갈",      2500,    350, new Color(0.9f, 0.7f, 0.2f), slime);
             var d2 = MakeMon("사막 미라",      3200,    450, new Color(0.8f, 0.7f, 0.5f), slime, regen:5f);
             var d3 = MakeMon("사막 뱀",        4000,    550, new Color(0.9f, 0.5f, 0.1f), slime);
             var db = MakeMon("모래 군주",     30000,   6000, new Color(0.9f, 0.6f, 0.0f), slime,
-                             isBoss:true, dropChance:0.8f, regen:60f, size:new Vector2(1.2f,1.2f));
+                             isBoss:true, dropChance:0.8f, regen:72f, size:new Vector2(1.2f,1.2f));
 
             // ── Zone 4: 동굴 (cave) · Stage 31-40 ────────────────────────
             var c1 = MakeMon("동굴 박쥐",     10000,   1200, new Color(0.4f, 0.3f, 0.5f), slime);
             var c2 = MakeMon("바위 골렘",     13000,   1600, new Color(0.5f, 0.5f, 0.5f), slime, regen:15f);
             var c3 = MakeMon("동굴 거미",     16000,   2000, new Color(0.3f, 0.2f, 0.4f), slime);
             var cb = MakeMon("동굴 군주",    120000,  20000, new Color(0.6f, 0.2f, 0.6f), slime,
-                             isBoss:true, dropChance:0.82f, regen:200f, size:new Vector2(1.2f,1.2f));
+                             isBoss:true, dropChance:0.82f, regen:240f, size:new Vector2(1.2f,1.2f));
 
             // ── Zone 5: 설원 (tundra) · Stage 41-50 ──────────────────────
             var t1 = MakeMon("설원 늑대",      45000,   5000, new Color(0.7f, 0.85f, 1.0f), slime);
             var t2 = MakeMon("설인",           60000,   7000, new Color(0.9f, 0.95f, 1.0f), slime, regen:50f);
             var t3 = MakeMon("빙하 정령",      75000,   9000, new Color(0.4f, 0.7f, 1.0f), slime, regen:30f);
             var tb = MakeMon("빙하 거인",     600000,  80000, new Color(0.2f, 0.5f, 0.9f), dragon ?? slime,
-                             isBoss:true, dropChance:0.84f, regen:800f, size:new Vector2(1.2f,1.2f));
+                             isBoss:true, dropChance:0.84f, regen:960f, size:new Vector2(1.2f,1.2f));
 
             // ── Zone 6: 천공 (skyisland) · Stage 51-60 ───────────────────
             var sk1 = MakeMon("바람 정령",    200000,  30000, new Color(0.8f, 0.9f, 1.0f), dragon ?? slime, regen:80f);
             var sk2 = MakeMon("그리핀",       270000,  40000, new Color(0.9f, 0.8f, 0.4f), dragon ?? slime);
             var sk3 = MakeMon("하르피아",     340000,  50000, new Color(0.6f, 0.7f, 0.9f), dragon ?? slime);
             var skb = MakeMon("천공의 군주", 2500000, 350000, new Color(0.5f, 0.8f, 1.0f), dragon ?? slime,
-                              isBoss:true, dropChance:0.86f, regen:3000f, size:new Vector2(1.2f,1.2f));
+                              isBoss:true, dropChance:0.86f, regen:3600f, size:new Vector2(1.2f,1.2f));
 
             // ── Zone 7: 고대 유적 (ruins) · Stage 61-70 ──────────────────
             var r1 = MakeMon("미이라 병사",      900000,   150000, new Color(0.8f, 0.75f, 0.5f), dragon ?? slime, regen:200f);
             var r2 = MakeMon("돌 파수꾼",       1200000,   200000, new Color(0.6f, 0.6f, 0.55f), dragon ?? slime, regen:300f);
             var r3 = MakeMon("유적 악령",       1500000,   250000, new Color(0.5f, 0.3f, 0.7f),  dragon ?? slime);
             var rb = MakeMon("고대 수호신",    12000000,  2000000, new Color(0.9f, 0.8f, 0.3f),  dragon ?? slime,
-                             isBoss:true, dropChance:0.88f, regen:15000f, size:new Vector2(1.2f,1.2f));
+                             isBoss:true, dropChance:0.88f, regen:18000f, size:new Vector2(1.2f,1.2f));
 
             // ── Zone 8: 마계 (demon) · Stage 71-80 ───────────────────────
             var dm1 = MakeMon("마계 임프",     4000000,    700000, new Color(0.8f, 0.2f, 0.2f), dragon ?? slime);
             var dm2 = MakeMon("악마 기사",     5500000,    950000, new Color(0.6f, 0.1f, 0.1f), dragon ?? slime, regen:1000f);
             var dm3 = MakeMon("마계 마법사",   7000000,   1200000, new Color(0.7f, 0.1f, 0.5f), dragon ?? slime, regen:800f);
             var dmb = MakeMon("마계 군주",    60000000,  10000000, new Color(0.9f, 0.1f, 0.1f), dragon ?? slime,
-                              isBoss:true, dropChance:0.9f, regen:80000f, size:new Vector2(1.2f,1.2f));
+                              isBoss:true, dropChance:0.9f, regen:96000f, size:new Vector2(1.2f,1.2f));
 
             // ── Zone 9: 공허 (void) · Stage 81-90 ────────────────────────
             var v1 = MakeMon("공허 유령",      20000000,   4000000, new Color(0.4f, 0.3f, 0.6f), dragon ?? slime, regen:3000f);
             var v2 = MakeMon("혼돈 정령",      28000000,   5500000, new Color(0.2f, 0.1f, 0.5f), dragon ?? slime, regen:4000f);
             var v3 = MakeMon("공허 사냥꾼",    36000000,   7000000, new Color(0.5f, 0.2f, 0.8f), dragon ?? slime);
             var vb = MakeMon("공허의 지배자", 300000000,  50000000, new Color(0.3f, 0.0f, 0.6f), dragon ?? slime,
-                             isBoss:true, dropChance:0.92f, regen:400000f, size:new Vector2(1.2f,1.2f));
+                             isBoss:true, dropChance:0.92f, regen:480000f, size:new Vector2(1.2f,1.2f));
 
             // ── Zone 10: 심연 (abyss) · Stage 91+ ────────────────────────
             var a1 = MakeMon("심연 괴물",      100000000,   20000000, new Color(0.1f, 0.1f, 0.2f),  dragon ?? slime, regen:10000f);
             var a2 = MakeMon("고대의 존재",    150000000,   30000000, new Color(0.0f, 0.05f, 0.15f), dragon ?? slime, regen:15000f);
             var a3 = MakeMon("심연 군주",      200000000,   40000000, new Color(0.05f, 0.0f, 0.1f),  dragon ?? slime, regen:20000f);
             var ab = MakeMon("심연의 신",     1500000000,  250000000, new Color(0.0f, 0.0f, 0.05f),  dragon ?? slime,
-                             isBoss:true, dropChance:1.0f, regen:2000000f, size:new Vector2(1.2f,1.2f));
+                             isBoss:true, dropChance:1.0f, regen:2400000f, size:new Vector2(1.2f,1.2f));
 
             _stageConfigs = new[]
             {
-                MakeStage( 1, 10, "grassland", "초원",      new[]{g1,g2,g3,g4,g5,g6,g7,g8,g9,g10}, gb),
-                MakeStage(11, 20, "forest",    "숲",        new[]{f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12}, fb),
-                MakeStage(21, 30, "desert",    "사막",      new[]{d1,d2,d3},    db),
-                MakeStage(31, 40, "cave",      "동굴",      new[]{c1,c2,c3},    cb),
-                MakeStage(41, 50, "tundra",    "설원",      new[]{t1,t2,t3},    tb),
-                MakeStage(51, 60, "skyisland", "천공",      new[]{sk1,sk2,sk3}, skb),
-                MakeStage(61, 70, "ruins",     "고대 유적", new[]{r1,r2,r3},    rb),
-                MakeStage(71, 80, "demon",     "마계",      new[]{dm1,dm2,dm3}, dmb),
-                MakeStage(81, 90, "void",      "공허",      new[]{v1,v2,v3},    vb),
-                MakeStage(91,999, "abyss",     "심연",      new[]{a1,a2,a3},    ab),
+                MakeStage( 1,  1, "grassland", "초원",      new[]{g1,g2,g3,g4,g5,g6,g7,g8,g9,g10}, gb),
+                MakeStage( 2,  2, "forest",    "숲",        new[]{f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12}, fb),
+                MakeStage( 3,  3, "desert",    "사막",      new[]{d1,d2,d3},    db),
+                MakeStage( 4,  4, "cave",      "동굴",      new[]{c1,c2,c3},    cb),
+                MakeStage( 5,  5, "tundra",    "설원",      new[]{t1,t2,t3},    tb),
+                MakeStage( 6,  6, "skyisland", "천공",      new[]{sk1,sk2,sk3}, skb),
+                MakeStage( 7,  7, "ruins",     "고대 유적", new[]{r1,r2,r3},    rb),
+                MakeStage( 8,  8, "demon",     "마계",      new[]{dm1,dm2,dm3}, dmb),
+                MakeStage( 9,  9, "void",      "공허",      new[]{v1,v2,v3},    vb),
+                MakeStage(10, 99, "abyss",     "심연",      new[]{a1,a2,a3},    ab),
             };
 
             // Inspector 기본 풀이 비어있으면 1구간 몬스터를 폴백으로 사용
@@ -272,8 +272,10 @@ namespace IdleGame.Core
 
         public void OnMonsterKilled()
         {
-            // 보스를 처치했을 때만 스테이지 진행
-            if (CurrentMonster != null && CurrentMonster.IsBoss)
+            bool wasBoss    = CurrentMonster != null && CurrentMonster.IsBoss;
+            bool isNewClear = wasBoss && Stage >= MaxStageReached;
+
+            if (isNewClear)
             {
                 Stage++;
                 PlayerPrefs.SetInt("currentStage", Stage);
@@ -288,6 +290,7 @@ namespace IdleGame.Core
                 ApplyStageEnvironment(Stage);
                 OnStageChanged?.Invoke(Stage);
             }
+
             SpawnMonster();
         }
 

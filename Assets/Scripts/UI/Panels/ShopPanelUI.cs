@@ -119,8 +119,13 @@ namespace IdleGame.UI.Panels
 
         private Coroutine _holdSellRoutine;
         private bool      _holdActivated;
+        private GameObject _confirmOverlay;
 
-        private void OnDisable() => StopHoldSell();
+        private void OnDisable()
+        {
+            StopHoldSell();
+            if (_confirmOverlay != null) { Destroy(_confirmOverlay); _confirmOverlay = null; }
+        }
 
         private void Refresh()
         {
@@ -156,13 +161,9 @@ namespace IdleGame.UI.Panels
                     v => { sm.SetAutoSellRare(v);   Refresh(); });
             }
 
-            bool hasNormal = false;
-            foreach (var item in items)
-            {
-                if (item == null || item.rarity != ItemRarity.Normal || !InventoryManager.Instance.IsOwned(item)) continue;
-                if (!InventoryManager.Instance.IsEquipped(item)) { hasNormal = true; break; }
-            }
-            CreateSellAllNormalRow(hasNormal);
+            double normalTotal = CalcSellAllValue(items, ItemRarity.Normal);
+            double rareTotal   = CalcSellAllValue(items, ItemRarity.Rare);
+            CreateSellAllRow(normalTotal, rareTotal);
 
             bool hasAny = false;
             foreach (var item in items)
@@ -198,22 +199,133 @@ namespace IdleGame.UI.Panels
             btn.GetComponent<Button>().onClick.AddListener(() => onToggle(!isOn));
         }
 
-        private void CreateSellAllNormalRow(bool hasNormal)
+        private void CreateSellAllRow(double normalTotal, double rareTotal)
         {
-            var row = new GameObject("SellAllNormal_Row");
+            var row = new GameObject("SellAll_Row");
             row.transform.SetParent(_listContent, false);
             row.AddComponent<RectTransform>().sizeDelta = new Vector2(0, 80);
             row.AddComponent<Image>().color = UITheme.BgRowSellAll;
 
-            var btn = UIHelper.MakeButton(row.transform, "노말 아이템 전부 판매", 30,
-                hasNormal ? UITheme.BtnSellAll : UITheme.BtnDisabled);
-            var brt = btn.GetComponent<RectTransform>();
-            brt.anchorMin = Vector2.zero; brt.anchorMax = Vector2.one;
-            brt.offsetMin = new Vector2(14, 10); brt.offsetMax = new Vector2(-14, -10);
+            var hlg = row.AddComponent<HorizontalLayoutGroup>();
+            hlg.padding = new RectOffset(10, 10, 10, 10);
+            hlg.spacing = 10;
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
+            hlg.childForceExpandWidth = true;
+            hlg.childForceExpandHeight = true;
 
-            var b = btn.GetComponent<Button>();
-            if (hasNormal) b.onClick.AddListener(() => InventoryManager.Instance.SellAllByRarity(ItemRarity.Normal));
-            else           b.interactable = false;
+            bool hasNormal = normalTotal > 0;
+            var normalBtn = UIHelper.MakeButton(row.transform, "노말 전부 판매", 26,
+                hasNormal ? UITheme.BtnSellAll : UITheme.BtnDisabled);
+            var nb = normalBtn.GetComponent<Button>();
+            if (hasNormal) nb.onClick.AddListener(() => ShowConfirmModal(
+                "노말 아이템 전부 판매",
+                $"총 {NumberFormatter.Format(normalTotal)} 골드를 획득합니다",
+                () => InventoryManager.Instance.SellAllByRarity(ItemRarity.Normal)));
+            else           nb.interactable = false;
+
+            bool hasRare = rareTotal > 0;
+            var rareBtn = UIHelper.MakeButton(row.transform, "레어 전부 판매", 26,
+                hasRare ? UITheme.BtnSellAllRare : UITheme.BtnDisabled);
+            var rb = rareBtn.GetComponent<Button>();
+            if (hasRare) rb.onClick.AddListener(() => ShowConfirmModal(
+                "레어 아이템 전부 판매",
+                $"총 {NumberFormatter.Format(rareTotal)} 골드를 획득합니다",
+                () => InventoryManager.Instance.SellAllByRarity(ItemRarity.Rare)));
+            else         rb.interactable = false;
+        }
+
+        private double CalcSellAllValue(ItemData[] items, ItemRarity rarity)
+        {
+            double total = 0;
+            foreach (var item in items)
+            {
+                if (item == null || item.rarity != rarity || item.isStackable) continue;
+                if (!InventoryManager.Instance.IsOwned(item)) continue;
+                int sellCount = InventoryManager.Instance.GetCount(item);
+                if (InventoryManager.Instance.IsEquipped(item)) sellCount = System.Math.Max(0, sellCount - 1);
+                total += item.sellPrice * sellCount;
+            }
+            return total;
+        }
+
+        private void ShowConfirmModal(string title, string info, System.Action onConfirm)
+        {
+            if (_confirmOverlay != null) Destroy(_confirmOverlay);
+
+            _confirmOverlay = new GameObject("ConfirmOverlay");
+            _confirmOverlay.transform.SetParent(transform, false);
+            var ort = _confirmOverlay.AddComponent<RectTransform>();
+            ort.anchorMin = Vector2.zero; ort.anchorMax = Vector2.one;
+            ort.offsetMin = ort.offsetMax = Vector2.zero;
+            _confirmOverlay.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.65f);
+            _confirmOverlay.AddComponent<Button>().onClick.AddListener(() =>
+            {
+                if (_confirmOverlay != null) { Destroy(_confirmOverlay); _confirmOverlay = null; }
+            });
+            _confirmOverlay.transform.SetAsLastSibling();
+
+            var card = new GameObject("Card");
+            card.transform.SetParent(_confirmOverlay.transform, false);
+            var crt = card.AddComponent<RectTransform>();
+            crt.anchorMin = new Vector2(0.5f, 0.5f); crt.anchorMax = new Vector2(0.5f, 0.5f);
+            crt.pivot = new Vector2(0.5f, 0.5f);
+            crt.anchoredPosition = Vector2.zero;
+            crt.sizeDelta = new Vector2(480, 260);
+            card.AddComponent<Image>().color = UITheme.BgConfirmCard;
+            var et = card.AddComponent<EventTrigger>();
+            var blockEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerClick };
+            blockEntry.callback.AddListener(_ => { });
+            et.triggers.Add(blockEntry);
+
+            var vlg = card.AddComponent<VerticalLayoutGroup>();
+            vlg.padding = new RectOffset(24, 24, 24, 24);
+            vlg.spacing = 14;
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+
+            MakeCardLabel(card.transform, title, 30, Color.white, 46);
+            MakeCardLabel(card.transform, info, 26, new Color(1f, 0.85f, 0.3f), 40);
+
+            var btnRow = new GameObject("BtnRow");
+            btnRow.transform.SetParent(card.transform, false);
+            btnRow.AddComponent<LayoutElement>().preferredHeight = 72;
+            var brhlg = btnRow.AddComponent<HorizontalLayoutGroup>();
+            brhlg.spacing = 14;
+            brhlg.childControlWidth = true;
+            brhlg.childControlHeight = true;
+            brhlg.childForceExpandWidth = true;
+            brhlg.childForceExpandHeight = true;
+
+            UIHelper.MakeButton(btnRow.transform, "취소", 28, UITheme.BtnConfirmCancel)
+                .GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    if (_confirmOverlay != null) { Destroy(_confirmOverlay); _confirmOverlay = null; }
+                });
+            UIHelper.MakeButton(btnRow.transform, "판매 확인", 28, UITheme.BtnConfirmOk)
+                .GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    var overlay = _confirmOverlay;
+                    _confirmOverlay = null;
+                    onConfirm?.Invoke();
+                    if (overlay != null) Destroy(overlay);
+                });
+        }
+
+        private static void MakeCardLabel(Transform parent, string text, int fontSize, Color color, int height)
+        {
+            var go = new GameObject("Label");
+            go.transform.SetParent(parent, false);
+            go.AddComponent<LayoutElement>().preferredHeight = height;
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = fontSize;
+            tmp.color = color;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
+            tmp.raycastTarget = false;
         }
 
         private void CreateBuyRow(ItemData item)
