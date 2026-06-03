@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3331369d686140298ba41935373be142, type: 3}
   m_Name: Upgrade_MultiHit
   m_EditorClassIdentifier: Assembly-CSharp::IdleGame.Data.UpgradeData
-  upgradeName: "연속 타격"
-  description: "클릭 데미지 증가 (스킬)"
+  upgradeName: "연격"
+  description: "빠른 연속 타격으로 클릭 데미지 증가"
   icon: {fileID: 0}
   baseCost: 300
   costMultiplier: 1.12

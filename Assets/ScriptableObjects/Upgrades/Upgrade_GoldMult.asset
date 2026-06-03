@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Upgrade_GoldMult
   m_EditorClassIdentifier: Assembly-CSharp::IdleGame.Data.UpgradeData
   upgradeName: "황금 손길"
-  description: "획득 골드 배율 증가"
+  description: "몬스터 처치 시 골드 획득량 증가"
   icon: {fileID: 0}
   baseCost: 500
   costMultiplier: 1.2

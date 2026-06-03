@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3331369d686140298ba41935373be142, type: 3}
   m_Name: Upgrade_AutoDPS
   m_EditorClassIdentifier: Assembly-CSharp::IdleGame.Data.UpgradeData
-  upgradeName: "자동 공격"
-  description: "초당 자동 데미지 증가"
+  upgradeName: "파이어볼"
+  description: "불덩이를 자동으로 발사해 지속 데미지 증가"
   icon: {fileID: 0}
   baseCost: 200
   costMultiplier: 1.15

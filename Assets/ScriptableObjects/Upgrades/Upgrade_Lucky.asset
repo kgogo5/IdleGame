@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3331369d686140298ba41935373be142, type: 3}
   m_Name: Upgrade_Lucky
   m_EditorClassIdentifier: Assembly-CSharp::IdleGame.Data.UpgradeData
-  upgradeName: "행운"
-  description: "골드 획득 배율 증가 (스킬)"
+  upgradeName: "약탈의 기술"
+  description: "전투 경험으로 더 많은 골드를 획득"
   icon: {fileID: 0}
   baseCost: 1500
   costMultiplier: 1.25

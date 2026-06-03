@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3331369d686140298ba41935373be142, type: 3}
   m_Name: Upgrade_PoisonMist
   m_EditorClassIdentifier: Assembly-CSharp::IdleGame.Data.UpgradeData
-  upgradeName: "독 안개"
-  description: "자동 공격 증가 (스킬)"
+  upgradeName: "독안개"
+  description: "독성 안개를 뿜어내 지속적인 자동 데미지 증가"
   icon: {fileID: 0}
   baseCost: 800
   costMultiplier: 1.14

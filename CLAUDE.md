@@ -33,14 +33,17 @@ Assets/
 │   │   ├── StatType.cs
 │   │   ├── StatModifier.cs
 │   │   ├── EquipSlot.cs
-│   │   ├── SetBonusData.cs
+│   │   ├── SetBonusData.cs     # 세트 효과 정의 (단계별 보너스)
+│   │   ├── SetEffect.cs        # 세트 효과 추상 클래스
+│   │   ├── PeriodicSkillEffect.cs # 주기적 스킬 발동 세트 효과
+│   │   ├── GameConfig.cs       # 밸런스 수치 중앙화 ScriptableObject ★
 │   │   └── ParticleEffectConfig.cs
 │   ├── Managers/
-│   │   ├── PlayerStats.cs      # 클릭/자동 데미지, 공속, 골드배율, 드랍률 계산
+│   │   ├── PlayerStats.cs      # 클릭/자동 데미지, 공속, 골드배율, 드랍률, 크리티컬
 │   │   ├── CurrencyManager.cs  # 골드·보석 증감, 이벤트 발행
-│   │   ├── MonsterManager.cs   # 몬스터 스폰, 스테이지, 보스, 도망 시스템
+│   │   ├── MonsterManager.cs   # 몬스터 스폰, 존/스테이지 진행, 보스, 도망 시스템
 │   │   ├── UpgradeManager.cs   # 스킬 업그레이드 구매·효과 적용
-│   │   ├── InventoryManager.cs # 아이템 보유·장착·판매·드랍
+│   │   ├── InventoryManager.cs # 아이템 보유·장착·판매·드랍 (minDropStage 기반)
 │   │   ├── ParticleManager.cs  # JSON 기반 파티클 이펙트 스폰
 │   │   ├── AudioManager.cs     # BGM·SFX 재생
 │   │   └── SettingsManager.cs  # 볼륨·진동·알림 설정 저장
@@ -50,11 +53,13 @@ Assets/
 │   │   ├── NavigationController.cs # 5탭 네비게이션
 │   │   ├── Panels/
 │   │   │   ├── UpgradePanelUI.cs   # 스킬 업그레이드 + 3열 보너스 요약
-│   │   │   ├── EquipmentPanelUI.cs # 장비 목록 + 3열 최종 스탯 요약
+│   │   │   ├── EquipmentPanelUI.cs # 장비 목록 + 필터 + 3열 최종 스탯 요약
+│   │   │   ├── StatsPanelUI.cs     # 전체 스탯 상세 표시
 │   │   │   ├── ShopPanelUI.cs      # 구매/판매 탭
-│   │   │   ├── AchievementPanelUI.cs
+│   │   │   ├── AchievementPanelUI.cs # 업적 (UI만 구현, 조건/보상 미연동)
+│   │   │   ├── AdminPanel.cs       # 개발자 패널 (골드/아이템 지급, 스테이지 이동)
 │   │   │   ├── SettingsPanel.cs    # 설정 팝업 (볼륨·토글·리셋·개발자)
-│   │   │   └── StageSelectPanelUI.cs # 스테이지 선택 팝업 (StageDisplay)
+│   │   │   └── StageSelectPanelUI.cs # 스테이지 선택 팝업
 │   │   └── Elements/
 │   │       ├── MonsterHealthBar.cs # 체력바 + 도망 버튼
 │   │       ├── ItemToastManager.cs # 아이템 획득 토스트 알림
@@ -68,14 +73,15 @@ Assets/
 ├── Scenes/
 │   └── Main.unity
 ├── ScriptableObjects/
-│   ├── Upgrades/
-│   └── Items/
+│   ├── Upgrades/               # 스킬 8종 (강타/분쇄/연격/파이어볼/혼돈의오브/독안개/황금손길/약탈의기술)
+│   └── Items/                  # 상점 아이템
 ├── Sprites/
 ├── Audio/
 │   ├── BGM/
 │   └── SFX/
 └── Resources/
     ├── Backgrounds/            # 스테이지별 배경 이미지
+    ├── Monsters/               # grassland, forest 존 스프라이트
     └── Particles/
         └── hit_particles.json  # 파티클 이펙트 데이터
 ```
@@ -187,11 +193,13 @@ CurrencyManager.Instance.OnGoldChanged -= UpdateGold;
 | 시스템 | 클래스 | 역할 |
 |--------|--------|------|
 | UI 초기화 | `UIBoot` | 게임 시작 시 전체 UI 구조 생성 |
-| 플레이어 스탯 | `PlayerStats` | 클릭/자동 데미지, 공속, 골드배율, 드랍률 |
+| 플레이어 스탯 | `PlayerStats` | 클릭/자동 데미지, 공속, 골드배율, 드랍률, 크리티컬 |
 | 재화 | `CurrencyManager` | 골드·보석 증감, 저장 |
-| 몬스터 | `MonsterManager` | 스폰, 스테이지 진행, 보스, 도망 |
+| 몬스터 | `MonsterManager` | 스폰, 존/스테이지 진행, 보스, 도망 (10존 × 10스테이지) |
 | 업그레이드 | `UpgradeManager` | 스킬 구매, PlayerStats에 플랫 보너스 적용 |
-| 인벤토리 | `InventoryManager` | 아이템 보유·장착·판매, PlayerStats에 % 보너스 적용 |
+| 인벤토리 | `InventoryManager` | 아이템 보유·장착·판매·드랍 (minDropStage 기반 스테이지 제한) |
+| 세트 효과 | `SetBonusData` + `PeriodicSkillEffect` | 세트 아이템 장착 수에 따른 단계별 효과 |
+| 밸런스 설정 | `GameConfig` | 몬스터 HP/골드/보스 수치 중앙화 |
 | 파티클 | `ParticleManager` | hit_particles.json 기반 이펙트 스폰 |
 | 설정 | `SettingsManager` | BGM/SFX 볼륨, 진동, 알림 |
 | 오디오 | `AudioManager` | BGM·SFX 재생 |
@@ -239,3 +247,15 @@ CurrencyManager.Instance.OnGoldChanged -= UpdateGold;
 ### 저장 시스템
 - `PlayerPrefs` 기반
 - 각 매니저에 `ResetData()` 메서드로 초기화 지원
+- 저장 항목: 골드/보석(`CurrencyManager`), 업그레이드 레벨(`UpgradeManager`), 인벤토리·장착(`InventoryManager`), 스테이지 진행도(`MonsterManager`), 설정(`SettingsManager`)
+
+### 존/스테이지 구조
+- 10존 × 10스테이지 = 총 100스테이지
+- Zone 1 초원(1~10) → Zone 2 숲(11~20) → Zone 3 사막(21~30) → ... → Zone 10 심연(91+)
+- 현재 스프라이트 준비된 존: grassland(초원), forest(숲) — 나머지는 폴백 보스 사용
+
+### 아이템 드랍 시스템
+- `ItemData.minDropStage` 값으로 스테이지별 드랍 제한
+- 드랍 시 등급 가중치 롤 → 해당 등급의 미보유 아이템 중 랜덤 지급
+- 모든 장비 수집 완료 시 소모품 or 골드로 대체
+- 자동판매: Normal/Rare 등급별로 `SettingsManager` + `PlayerStats` 언락 조건 체크

@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3331369d686140298ba41935373be142, type: 3}
   m_Name: Upgrade_ClickDamage
   m_EditorClassIdentifier: Assembly-CSharp::IdleGame.Data.UpgradeData
-  upgradeName: "손가락 강화"
-  description: "클릭 데미지 증가"
+  upgradeName: "강타"
+  description: "강력한 일격으로 클릭 데미지 증가"
   icon: {fileID: 0}
   baseCost: 50
   costMultiplier: 1.15
