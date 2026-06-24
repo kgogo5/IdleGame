@@ -33,7 +33,7 @@ namespace IdleGame.UI
             if (MonsterManager.Instance.CurrentMonster != null)
                 BindToMonster(MonsterManager.Instance.CurrentMonster);
 
-            CurrencyManager.Instance.OnGoldChanged += _ => RefreshFleeButton();
+            CurrencyManager.Instance.OnGoldChanged += OnGoldChangedHandler;
             NavigationController.OnTabChanged += OnTabChanged;
 
             CreateFleeButton();
@@ -188,6 +188,8 @@ namespace IdleGame.UI
             tmp.raycastTarget = false;
         }
 
+        private void OnGoldChangedHandler(double _) => RefreshFleeButton();
+
         private void RefreshFleeButton()
         {
             if (_fleeButton == null || _fleeLabel == null) return;
@@ -243,7 +245,7 @@ namespace IdleGame.UI
                 MonsterManager.Instance.OnStageChanged   -= UpdateStage;
             }
             if (CurrencyManager.Instance != null)
-                CurrencyManager.Instance.OnGoldChanged -= _ => RefreshFleeButton();
+                CurrencyManager.Instance.OnGoldChanged -= OnGoldChangedHandler;
             NavigationController.OnTabChanged -= OnTabChanged;
             CloseFleeConfirm();
         }

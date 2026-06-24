@@ -26,8 +26,8 @@ namespace IdleGame.UI.Panels
             Refresh();
             if (InventoryManager.Instance != null)
             {
-                InventoryManager.Instance.OnItemAcquired  += _ => Refresh();
-                InventoryManager.Instance.OnItemAutoSold  += (_, __) => Refresh();
+                InventoryManager.Instance.OnItemAcquired += OnAcquired;
+                InventoryManager.Instance.OnItemAutoSold += OnAutoSold;
             }
         }
 
@@ -36,10 +36,13 @@ namespace IdleGame.UI.Panels
         {
             if (InventoryManager.Instance != null)
             {
-                InventoryManager.Instance.OnItemAcquired  -= _ => Refresh();
-                InventoryManager.Instance.OnItemAutoSold  -= (_, __) => Refresh();
+                InventoryManager.Instance.OnItemAcquired -= OnAcquired;
+                InventoryManager.Instance.OnItemAutoSold -= OnAutoSold;
             }
         }
+
+        private void OnAcquired(ItemData _) => Refresh();
+        private void OnAutoSold(ItemData _, double __) => Refresh();
 
         private void BuildLayout()
         {

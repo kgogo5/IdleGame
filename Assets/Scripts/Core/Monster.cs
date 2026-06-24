@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using IdleGame.Data;
 using IdleGame.Managers;
+using IdleGame.Gameplay;
 
 namespace IdleGame.Core
 {
@@ -113,8 +114,8 @@ namespace IdleGame.Core
             var shadowObj = new GameObject("Shadow");
             shadowObj.transform.SetParent(transform, false);
 
-            // 스프라이트 하단 기준으로 위치 계산
-            float spriteBottom = mainSr.localBounds.min.y;
+            // 스프라이트 바운딩박스에는 투명 패딩이 포함되므로 절반값 사용
+            float spriteBottom = mainSr.localBounds.min.y * 0.5f;
             shadowObj.transform.localPosition = new Vector3(cfg.shadowOffset.x, spriteBottom + cfg.shadowOffset.y, 0.01f);
             shadowObj.transform.localScale    = new Vector3(cfg.shadowScale.x, cfg.shadowScale.y, 1f);
             _shadowRenderer = shadowObj.AddComponent<SpriteRenderer>();
@@ -243,6 +244,23 @@ namespace IdleGame.Core
             TakeDamage(stats.ClickDamage);
             AudioManager.Instance?.PlayHit();
             AudioManager.TryVibrate();
+
+            if (!CriticalZoneEffect.IsActive && stats.CriticalChance > 0
+                && UnityEngine.Random.value < stats.CriticalChance)
+            {
+                SpawnCriticalZone(stats.ClickDamage * stats.CriticalDamage);
+            }
+        }
+
+        private void SpawnCriticalZone(double critDamage)
+        {
+            var canvas = FindAnyObjectByType<Canvas>();
+            if (canvas == null) return;
+            Vector3 offset = new Vector3(
+                UnityEngine.Random.Range(-0.7f, 0.7f),
+                UnityEngine.Random.Range(-0.2f, 0.6f),
+                0f);
+            CriticalZoneEffect.TrySpawn(canvas, transform.position + offset, critDamage, this);
         }
 
         private static readonly System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> _raycastResults = new();
